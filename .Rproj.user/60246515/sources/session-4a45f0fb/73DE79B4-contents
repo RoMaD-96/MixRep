@@ -73,10 +73,10 @@ m_post_theta <- function(theta, tr, sr, to, so, null, priorsd, x, y) {
 
 HPDI_post_m_weights <- function(tr, sr, to, so, x, y, null, priorsd, level = 0.95) {
   # Posterior Quantile Function
-  quantile_fun <- function(k) {
-    if (k == 0) {
+  quantile_fun <- function(q) {
+    if (q == 0) {
       res <- 0
-    } else if (k == 1) {
+    } else if (q == 1) {
       res <- 1
     } else {
       m_dens_fun <- function(w) {
@@ -84,7 +84,7 @@ HPDI_post_m_weights <- function(tr, sr, to, so, x, y, null, priorsd, level = 0.9
                        x = x, y = y, null = null, priorsd = priorsd)
       }
       root_fun <- function(x) {
-        integrate(f = m_dens_fun, lower = 0, upper = x)$value - k
+        integrate(f = m_dens_fun, lower = 0, upper = x)$value - q
       }
       res <- uniroot(f = root_fun, interval = c(0, 1))$root
     }
@@ -93,7 +93,7 @@ HPDI_post_m_weights <- function(tr, sr, to, so, x, y, null, priorsd, level = 0.9
   
   # Smallest HPDI
   opt_fun_scalar <- function(lower_q) {
-    width <- quantile_fun(k = lower_q + level) - quantile_fun(k = lower_q)
+    width <- quantile_fun(q = lower_q + level) - quantile_fun(q = lower_q)
     return(width)
   }
   opt_fun_vec <- Vectorize(FUN = opt_fun_scalar)
@@ -101,12 +101,12 @@ HPDI_post_m_weights <- function(tr, sr, to, so, x, y, null, priorsd, level = 0.9
                              method = "L-BFGS-B", lower = 0,
                              upper = 1 - level)$par)
   if (inherits(opt_min_lower, "try-error")) {
-    CI <- c("lower" = NaN, "upper" = NaN)
+    cr_int <- c("lower" = NaN, "upper" = NaN)
   } else {
-    CI <- c("lower" = quantile_fun(k = opt_min_lower),
-            "upper" = quantile_fun(k = opt_min_lower + level))
+    cr_int <- c("lower" = quantile_fun(q = opt_min_lower),
+            "upper" = quantile_fun(q = opt_min_lower + level))
   }
-  return(CI)
+  return(cr_int)
 }
 
 
@@ -116,7 +116,7 @@ HPDI_post_m_weights <- function(tr, sr, to, so, x, y, null, priorsd, level = 0.9
 HPDI_post_m_theta <- function(level, tr, sr, to, so, x = 1, y = 1, null, priorsd,
                            thetaRange = tr + c(-1, 1)*qnorm(p = (1 + level)/2)*sr*3,
                            quantileRange = c((1 - level)*0.2, (1 - level)*0.8)) {
-  ## posterior quantile function
+  # Posterior Quantile Function
   quantile_fun <- function(q) {
     if (q == 0) {
       res <- -Inf
@@ -135,9 +135,9 @@ HPDI_post_m_theta <- function(level, tr, sr, to, so, x = 1, y = 1, null, priorsd
     return(res)
   }
   
-  ## find narrowest interval
-  opt_fun_scalar <- function(qLow) {
-    width <- quantile_fun(q = qLow + level) - quantile_fun(q = qLow)
+  # Smallest HPDI
+  opt_fun_scalar <- function(lower_q) {
+    width <- quantile_fun(q = lower_q + level) - quantile_fun(q = lower_q)
     return(width)
   }
   opt_fun_vec <- Vectorize(FUN = opt_fun_scalar)
@@ -145,10 +145,10 @@ HPDI_post_m_theta <- function(level, tr, sr, to, so, x = 1, y = 1, null, priorsd
                                method = "L-BFGS-B", lower = quantileRange[1],
                                upper = quantileRange[2])$par)
   if (inherits(opt_min_lower, "try-error")) {
-    CI <- c("lower" = NaN, "upper" = NaN)
+    cr_int <- c("lower" = NaN, "upper" = NaN)
   } else {
-    CI <- c("lower" = quantile_fun(q = opt_min_lower),
+    cr_int <- c("lower" = quantile_fun(q = opt_min_lower),
             "upper" = quantile_fun(q = opt_min_lower + level))
   }
-  return(CI)
+  return(cr_int)
 }
