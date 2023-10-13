@@ -108,7 +108,7 @@ weights_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(
                                 x = alpha,
                                 y = beta
   )
-  out <- data.frame(x = wseq, density = marg_p_dens, rep_exp = rep_number[index],
+  out <- data.frame(x = wseq, density = marg_p_dens, rep_number = rep_number[index],
                     parameter = "'Weight parameter' ~ omega", tr = tr[index], sr = sr[index])
   return(out)
 }))
@@ -133,7 +133,7 @@ HPDI_weights <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i
 }))
 
 
-# plot_m_weight <- ggplot(data=weights_m_post, aes(x=x, y=density, group=rep_exp, color=factor(rep_exp))) +
+# plot_m_weight <- ggplot(data=weights_m_post, aes(x=x, y=density, group=rep_number, color=factor(rep_number))) +
 #   geom_line(size = 1) +
 #   scale_color_manual(
 #     values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2"),
@@ -156,7 +156,7 @@ plot_weights_m_hpd <- ggplot() +
   geom_errorbarh(data = HPDI_weights,
                  aes(xmin = lower, xmax = upper, y = y*1.05, color = factor(rep_number),
                      height = height), alpha = 0.8, size = 1.2) +
-  geom_line(data=weights_m_post, aes(x=x, y=density, group=rep_exp, color=factor(rep_exp)),
+  geom_line(data=weights_m_post, aes(x=x, y=density, group=rep_number, color=factor(rep_number)),
             lty = 1, alpha = 0.9, size = 1.2) +
   scale_color_manual(
     values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2"),
@@ -197,7 +197,7 @@ theta_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(in
 
 
 ## Posterior of effect size without using original data
-thetaplotDF2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+theta_m_post_2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   pDens <- dnorm(x = thetaseq, mean = tr[i], sd = sr[i])
   out <- data.frame(x = thetaseq, density = pDens, rep_number = rep_number[i],
                     parameter = "'Effect size' ~ theta", tr = tr[i], sr = sr[i])
@@ -208,40 +208,40 @@ thetaplotDF2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i
 ### . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ..
 ### Credibility Intervals                                                   ####
 
-thetaHPD <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+HPDI_theta <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   hpd <- HPDI_post_m_theta(level = 0.95, tr = tr[i], sr = sr[i], to = to,
                         so = so, x = alpha, y = beta, null = null, priorsd = priorsd)
-  out <- data.frame(y = max(c(thetaplotDF2$density, theta_m_post$density))*(1 + 0.06*i),
+  out <- data.frame(y = max(c(theta_m_post_2$density, theta_m_post$density))*(1 + 0.06*i),
                     lower = hpd[1], upper = hpd[2], rep_number = rep_number[i],
                     parameter = "'Effect size' ~ theta", tr = tr[i],
                     sr = sr[i], height = 0.6)
   return(out)
 }))
 
-theta2HPD <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+HPDI_theta_2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   hpd <- tr[i] + c(-1, 1)*qnorm(p = 0.975)*sr[i]
-  out <- data.frame(y = max(c(thetaplotDF2$density, theta_m_post$density))*(1 + 0.05*i),
+  out <- data.frame(y = max(c(theta_m_post_2$density, theta_m_post$density))*(1 + 0.05*i),
                     lower = hpd[1], upper = hpd[2], rep_number = rep_number[i],
                     parameter = "'Effect size' ~ theta", tr = tr[i],
                     sr = sr[i], height = 0.6)
   return(out)
 }))
-theta2HPD$trFormat <- paste0("{hat(theta)[italic('r')*", theta2HPD$rnumber, "] == ",
-                             round(theta2HPD$tr, 2), "}*',' ~ sigma[italic('r')*",
-                             theta2HPD$rnumber, "] == ", round(theta2HPD$sr, 2))
+HPDI_theta_2$trFormat <- paste0("{hat(theta)[italic('r')*", HPDI_theta_2$rnumber, "] == ",
+                             round(HPDI_theta_2$tr, 2), "}*',' ~ sigma[italic('r')*",
+                             HPDI_theta_2$rnumber, "] == ", round(HPDI_theta_2$sr, 2))
 
 
 
 
 plot_m_theta <- ggplot() +
-  geom_errorbarh(data = thetaHPD,
+  geom_errorbarh(data = HPDI_theta,
                  aes(xmin = lower, xmax = upper, y = y*1.05, color = factor(rep_number),
                      height = height), alpha = 0.8, size = 1.0) +
-  geom_errorbarh(data = theta2HPD,
+  geom_errorbarh(data = HPDI_theta_2,
                  aes(xmin = lower, xmax = upper, y = y*1.05, color = factor(rep_number),
                      height = height), alpha = 0.7, linetype = "22", size = 1.0) +
-  geom_line(data = thetaplotDF2, aes(x = x, y = density, color = factor(rep_number)),
-            lty = 2, alpha = 0.5, size = 1.0) +
+  geom_line(data = theta_m_post_2, aes(x = x, y = density, color = factor(rep_number)),
+            lty = 22, alpha = 0.5, size = 1.0) +
   geom_line(data = theta_m_post, aes(x = x, y = density, color = factor(rep_number)),
             alpha = 0.9, size = 1.0) +
   scale_color_manual(
