@@ -82,7 +82,7 @@ plot_joint <- ggplot(data = postdens_wrapper, aes(x = theta, y = omega, fill = d
   geom_contour(aes(z = density), breaks = seq(0, 24, 3),  alpha = 0.35, size = 0.5) +
   scale_fill_continuous_sequential(palette = "Blues 3", rev = TRUE) +
   labs(
-    subtitle = "Contour Plot considering three replications scenario",
+    subtitle = "Joint Posterior Contour Plot Considering Three Replications Scenario",
     x = bquote("Effect Size" ~ theta),
     y = bquote("Weight Parameter" ~ omega),
     fill = "Posterior \n Density"
