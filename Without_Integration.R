@@ -36,6 +36,60 @@ beta <- 1
 # Replication Number
 rep_number <- c(1,2,3)
 
+
+
+##  ............................................................................
+##  Plot Effect Estimate and 95% CI                                         ####
+
+# z-value for 95% CI
+z_value <- qnorm(0.975)
+
+# Calculate 95% CI for each group
+ci_o <- c(to - z_value * so, to + z_value * so)
+ci_r1 <- c(tr[1] - z_value * sr[1], tr[1] + z_value * sr[1])
+ci_r2 <- c(tr[2] - z_value * sr[2], tr[2] + z_value * sr[2])
+ci_r3 <- c(tr[3] - z_value * sr[3], tr[3] + z_value * sr[3])
+
+# Create a data frame
+data <- data.frame(
+  group = c("Theta_o", "Theta_r1", "Theta_r2", "Theta_r3"),
+  estimate = c(to, tr[1], tr[2], tr[3]),
+  ymin = c(ci_o[1], ci_r1[1], ci_r2[1], ci_r3[1]),
+  ymax = c(ci_o[2], ci_r1[2], ci_r2[2], ci_r3[2]),
+  color = c("#CE1622", "#E69F00", "#009E20", "#0072B2")
+)
+
+# Plot
+plot_theta <- ggplot(data) +
+  geom_point(aes(x = group, y = estimate, color = group), shape = 16, fill = "white", size = 4.5) +
+  geom_errorbar(aes(x = group, ymin = ymin, ymax = ymax, color = group), width = 0.15, size = 1.8) +
+  scale_color_manual(values = data$color) +
+  labs(
+    y = "Effect Size Estimate") +
+  scale_color_manual(
+    values = c("Theta_o" = "#CE1622" ,"Theta_r1" = "#E69F00", "Theta_r2" = "#009E20", "Theta_r3" = "#0072B2"),
+    labels = c(expression(" "~hat(theta)[o] == 0.21 ~ ", " ~ sigma[o] == 0.05),
+               expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.04),
+               expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
+               expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04))) +
+  theme_bw() +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    panel.grid.major.x = element_blank(),
+    legend.position = "top",
+    legend.title = element_blank(),
+    axis.text.y = element_text(size = 18),
+    axis.title.y = element_text(size = 22),
+    legend.text = element_text(size = 18)
+  )
+
+print(plot_theta)
+
+ggsave(filename = "plot_theta.jpg",path = "Plots", plot = plot_theta,
+       width = 13, height = 7, device='tiff', dpi=400)
+
 ##  ............................................................................
 ##  Joint Posterior                                                         ####
 
@@ -168,7 +222,7 @@ plot_weights_m_hpd <- ggplot() +
     x = expression(omega~" Values"),
     y = "Density"
   ) +
-  theme_minimal() +
+  theme_bw() +
   guides(color=guide_legend(title="Replicated Experiment")) 
 
 print(plot_weights_m_hpd)
@@ -254,7 +308,7 @@ plot_m_theta <- ggplot() +
     x = expression(theta~" Values"),
     y = "Density"
   ) +
-  theme_minimal() +
+  theme_bw() +
   guides(color=guide_legend(title="Replicated Experiment")) 
 
 
