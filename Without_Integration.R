@@ -56,7 +56,7 @@ data <- data.frame(
   estimate = c(to, tr[1], tr[2], tr[3]),
   ymin = c(ci_o[1], ci_r1[1], ci_r2[1], ci_r3[1]),
   ymax = c(ci_o[2], ci_r1[2], ci_r2[2], ci_r3[2]),
-  color = c("#CE1622", "#E69F00", "#009E20", "#0072B2")
+  color = c("#8A0404", "#E69F00", "#009E20", "#0072B2")
 )
 
 # Plot
@@ -67,7 +67,7 @@ plot_theta <- ggplot(data) +
   labs(
     y = "Effect Size Estimate") +
   scale_color_manual(
-    values = c("Theta_o" = "#CE1622" ,"Theta_r1" = "#E69F00", "Theta_r2" = "#009E20", "Theta_r3" = "#0072B2"),
+    values = c("Theta_o" = "#8A0404" ,"Theta_r1" = "#E69F00", "Theta_r2" = "#009E20", "Theta_r3" = "#0072B2"),
     labels = c(expression(" "~hat(theta)[o] == 0.21 ~ ", " ~ sigma[o] == 0.05),
                expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.04),
                expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
