@@ -68,6 +68,58 @@ legend("topleft", c("Posterior", "Likelihood (Replication)",
 legend("topright", legend = rev(wseq), lty = 1, col = rev(cols), title="weight")
 
 
+##  ............................................................................
+##  Using ggplot 2                                                          ####
+
+# Now let's create a data frame for ggplot
+densities <- sapply(X = wseq, FUN = function(w) {
+  rmapPost(theta = thetaseq, tr = tr, sr = sr, to = to, so = so,
+           null = null, priorsd = priorsd, w = w)
+})
+
+# Turn the results into a data frame
+df <- data.frame(theta = rep(thetaseq, times = length(wseq)),
+                 density = as.vector(densities),
+                 w = factor(rep(wseq, each = length(thetaseq))))
+
+# Add the additional lines
+df$likelihood <- dnorm(x = df$theta, mean = tr, sd = sr)
+df$prior_original <- dnorm(x = df$theta, mean = to, sd = so)
+df$prior_robust <- dnorm(x = df$theta, mean = null, sd = priorsd)
+
+
+# Create a separate data frame for the additional lines to help in creating the legend
+additional_lines <- data.frame(
+  theta = rep(thetaseq, 3),
+  value = c(dnorm(x = thetaseq, mean = tr, sd = sr),
+            dnorm(x = thetaseq, mean = to, sd = so),
+            dnorm(x = thetaseq, mean = null, sd = priorsd)),
+  linetype = factor(rep(c("Likelihood", "Prior Original", "Prior Robust"), each = length(thetaseq)))
+)
+
+# The ggplot
+p <- ggplot() + 
+  geom_line(data = df, aes(x = theta, y = density, color = w), size = 1) + 
+  geom_line(data = additional_lines, aes(x = theta, y = value, linetype = linetype), size = 0.8) +
+  scale_color_manual(values = cols) +
+  scale_linetype_manual(values = c("dashed", "dotted", "dotdash"),
+                        labels = c("Likelihood (Replication)", "Prior (Original component)", "Prior (Robust component)")) +
+  labs(x = expression("Effect Size" ~ theta), y = "Density") +
+  theme_bw() +
+  guides(color = guide_legend(title = "Weight"),
+         linetype = guide_legend(title = "Density"))
+
+# To make sure that our additional lines are represented in the legend, we need to add them to the plot
+p + geom_line(aes(linetype = "Likelihood (Replication)"), linetype = "dashed", color = "black") +
+  geom_line(aes(linetype = "Prior (Original component)"), linetype = "dotted", color = "black") +
+  geom_line(aes(linetype = "Prior (Robust component)"), linetype = "dotdash", color = "black") +
+  theme(legend.position = "right",
+        axis.text.y = element_text(size = 18),
+        axis.title.y = element_text(size = 22),
+        axis.text.x = element_text(size = 18),
+        axis.title.x = element_text(size = 22),
+        legend.text = element_text(size = 18),
+        legend.title = element_text(size = 20))
 
 
 #   ____________________________________________________________________________
