@@ -71,6 +71,10 @@ legend("topright", legend = rev(wseq), lty = 1, col = rev(cols), title="weight")
 ##  ............................................................................
 ##  Using ggplot 2                                                          ####
 
+
+cols <- hcl.colors(n = length(wseq), palette = "viridis", alpha = 0.9, rev = TRUE)
+
+
 # Now let's create a data frame for ggplot
 densities <- sapply(X = wseq, FUN = function(w) {
   rmapPost(theta = thetaseq, tr = tr, sr = sr, to = to, so = so,
@@ -98,7 +102,7 @@ additional_lines <- data.frame(
 )
 
 # The ggplot
-p <- ggplot() + 
+plot_post_fix <- ggplot() + 
   geom_line(data = df, aes(x = theta, y = density, color = w), size = 1) + 
   geom_line(data = additional_lines, aes(x = theta, y = value, linetype = linetype), size = 0.8) +
   scale_color_manual(values = cols) +
@@ -106,11 +110,12 @@ p <- ggplot() +
                         labels = c("Likelihood (Replication)", "Prior (Original component)", "Prior (Robust component)")) +
   labs(x = expression("Effect Size" ~ theta), y = "Density") +
   theme_bw() +
-  guides(color = guide_legend(title = "Weight"),
-         linetype = guide_legend(title = "Density"))
+  guides(linetype = guide_legend(title = "Density"),
+         color = guide_legend(title = "Weight")
+         )
 
 # To make sure that our additional lines are represented in the legend, we need to add them to the plot
-p + geom_line(aes(linetype = "Likelihood (Replication)"), linetype = "dashed", color = "black") +
+plot_post_fix <- plot_post_fix + geom_line(aes(linetype = "Likelihood (Replication)"), linetype = "dashed", color = "black") +
   geom_line(aes(linetype = "Prior (Original component)"), linetype = "dotted", color = "black") +
   geom_line(aes(linetype = "Prior (Robust component)"), linetype = "dotdash", color = "black") +
   theme(legend.position = "right",
@@ -119,9 +124,10 @@ p + geom_line(aes(linetype = "Likelihood (Replication)"), linetype = "dashed", c
         axis.text.x = element_text(size = 18),
         axis.title.x = element_text(size = 22),
         legend.text = element_text(size = 18),
-        legend.title = element_text(size = 20))
+        legend.title = element_text(size = 19))
 
-
+ggsave(filename = "plot_post_fix.pdf",path = "Plots", plot = plot_post_fix,
+       width = 16, height = 8.5, device='pdf', dpi=500, useDingbats = FALSE)
 #   ____________________________________________________________________________
 #   Random Weights                                                          ####
 
