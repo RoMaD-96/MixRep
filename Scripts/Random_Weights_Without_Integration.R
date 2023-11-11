@@ -5,7 +5,7 @@ library(ggplot2)
 library(ggpubr)
 library(colorspace)
 
-source("RepMixFun.R")
+source("Scripts/RepMixFun.R")
 
 #   ____________________________________________________________________________
 #   Random Weights                                                          ####

@@ -7,7 +7,7 @@ library(colorspace)
 library(tipmap)
 library(spatstat)
 
-source("RepMixFun.R")
+source("Scripts/RepMixFun.R")
 
 
 #   ____________________________________________________________________________
