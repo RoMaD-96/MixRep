@@ -108,6 +108,7 @@ plot_post_fix <- ggplot() +
 plot_post_fix <- plot_post_fix + geom_line(aes(linetype = "Likelihood (Replication)"), linetype = "dashed", color = "black") +
   geom_line(aes(linetype = "Prior (Original component)"), linetype = "dotted", color = "black") +
   geom_line(aes(linetype = "Prior (Robust component)"), linetype = "dotdash", color = "black") +
+  scale_x_continuous(limits=c(-0.10, 0.6)) +
   theme(legend.position = "right",
         strip.text.x = element_text(size = 18),
         axis.text.y = element_text(size = 18),
