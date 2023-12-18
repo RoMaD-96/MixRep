@@ -41,7 +41,7 @@ cols <- hcl.colors(n = length(wseq), palette = "viridis", alpha = 0.9, rev = TRU
 densities <- list()
 for (i in 1:length(tr)) {
 densities[[i]] <- sapply(X = wseq, FUN = function(w) {
-  rmapPostFix(theta = thetaseq, tr = tr[i], sr = sr[i], to = to, so = so,
+  rmapPostFix_alt(theta = thetaseq, tr = tr[i], sr = sr[i], to = to, so = so,
            null = null, priorsd = priorsd, w = w)
   })
 }
@@ -151,6 +151,9 @@ HPDI_theta_w_median$replication  <-  factor(HPDI_theta_w_median$replication,
 
 
 
+#   ____________________________________________________________________________
+#   Tipping Point Analysis                                                  ####
+
 
 # Plotting the error bars and points
 plot_HPDI_median_rep <- ggplot(HPDI_theta_w_median, aes(x = weight, y = median)) +
@@ -182,4 +185,73 @@ ggsave(filename = "plot_HPDI_median_rep.pdf",path = "Plots", plot = plot_HPDI_me
 
 
 #   ____________________________________________________________________________
-#   Tipping Point Analysis                                                  ####
+#   Empirical Bayes                                                         ####
+
+
+empirical_bayes <- list()
+for (i in 1:length(tr)) {
+  empirical_bayes[[i]] <- sapply(X = wseq, FUN = function(w) {
+    rmapPostFix_alt(theta = thetaseq, tr = tr[i], sr = sr[i], to = to, so = so,
+                    null = null, priorsd = priorsd, w = w)
+  })
+}
+
+
+
+
+
+
+bfPPtheta <- function(tr, sr, to, so, x = 1, y = 1, alpha = NA, ...) {
+  ## input checks
+  stopifnot(
+    length(tr) == 1,
+    is.numeric(tr),
+    is.finite(tr),
+    
+    length(to) == 1,
+    is.numeric(to),
+    is.finite(to),
+    
+    length(sr) == 1,
+    is.numeric(sr),
+    is.finite(sr),
+    0 < sr,
+    
+    length(so) == 1,
+    is.numeric(so),
+    is.finite(so),
+    0 < so,
+    
+    length(x) == 1,
+    is.numeric(x),
+    is.finite(x),
+    0 <= x,
+    
+    length(y) == 1,
+    is.numeric(y),
+    is.finite(y),
+    0 <= y,
+    
+    length(alpha) == 1,
+    (is.na(alpha) |
+       ((is.numeric(alpha)) &
+          (is.finite(alpha)) &
+          (0 <= alpha) &
+          (alpha <= 1)))
+  )
+  
+  ## marginal density under H0
+  fH0 <- stats::dnorm(x = tr, mean = 0, sd = sr)
+  
+  ## marginal density under H1
+  if (!is.na(alpha)) {
+    fH1 <- stats::dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2/alpha))
+  } else {
+    fH1 <- margLik(tr = tr, to = to, sr = sr, so = so, x = x, y = y,
+                   ... = ...)
+  }
+  
+  ## compute BF
+  bf01 <- fH0/fH1
+  return(bf01)
+}

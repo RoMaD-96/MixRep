@@ -64,6 +64,24 @@ rmapPostFix <- function(theta, w,  tr, sr, to, so, null, priorsd, x, y) {
     (1 - wUpdate)*dnorm(x = theta, mean = m2, sd = sqrt(v2))
 }
 
+
+rmapPostFix_alt <- function(theta, w,  tr, sr, to, so, null, priorsd, x, y) {
+  
+  num_post <- dnorm( x = tr, mean = theta, sd =  sr)*(w * dnorm( x = theta, mean = to, sd = so) +
+                                                        (1 - w) * dnorm(x = theta, mean = null, sd = priorsd))
+  den_post <- w*dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2)) + (1-w)*dnorm(x = tr, mean = null, sd = sqrt(sr^2 + priorsd^2))
+  post <- num_post/den_post
+}
+
+
+##  ............................................................................
+##  Marginal Likelihood                                                     ####
+
+marginal_lik_fix_w <- function(theta, w,  tr, sr, to, so, null, priorsd, x, y) {
+  
+  den_post <- w*dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2)) + (1-w)*dnorm(x = tr, mean = null, sd = sqrt(sr^2 + priorsd^2))
+}
+
 ##  ............................................................................
 ##  Joint Posterior Distribution                                            ####
 
