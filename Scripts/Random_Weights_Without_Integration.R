@@ -180,10 +180,20 @@ HPDI_theta_2$trFormat <- paste0("{hat(theta)[italic('r')*", HPDI_theta_2$rnumber
                              round(HPDI_theta_2$tr, 2), "}*',' ~ sigma[italic('r')*",
                              HPDI_theta_2$rnumber, "] == ", round(HPDI_theta_2$sr, 2))
 
+  
+#   ____________________________________________________________________________
+#   Bayes Factor                                                            ####
 
-
-
-
-
-
-
+bfDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  bf01 <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+                    x = 1, y = 1, null = null, priorsd = priorsd)
+  bfr <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = 1, 
+                   null = null,priorsd = priorsd, w = 1)
+  bfdc <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+                       x = 1, y = 1, null = null, priorsd = priorsd, w_null = 0, w_alt = 1)
+  bfdcRandom <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+                             x = 1, y = 2, null = null, priorsd = priorsd, w_null = NA, w_alt = NA)
+  out <- data.frame(number = rnumber[i], tr = tr[i], sr = sr[i], bf = bf01,
+                    bfr = bfr, bfdc = bfdc, bfdcRandom = bfdcRandom)
+  return(out)
+}))
