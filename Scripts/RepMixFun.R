@@ -315,7 +315,7 @@ bf_theta_mix <- function(tr, sr, to, so, x = 1, y = 1, null = null,
   null_H_0 <- dnorm(x = tr, mean = 0, sd = sr)
 
   ## marginal density under H1
-  if (!is.na(alpha)) {
+  if (!is.na(w)) {
     alt_H_1 <- w * dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2)) + 
               (1 - w) * dnorm(x = tr, mean = null, sd = sqrt(sr^2 + priorsd^2))
   } else {

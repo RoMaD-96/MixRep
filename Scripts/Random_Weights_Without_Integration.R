@@ -184,16 +184,21 @@ HPDI_theta_2$trFormat <- paste0("{hat(theta)[italic('r')*", HPDI_theta_2$rnumber
 #   ____________________________________________________________________________
 #   Bayes Factor                                                            ####
 
-bfDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  bf01 <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+rnumber <- c(1, 2, 3)
+
+bf_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  bf_theta <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so,
                     x = 1, y = 1, null = null, priorsd = priorsd)
-  bfr <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = 1, 
+  bf_theta_random <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = 1, 
                    null = null,priorsd = priorsd, w = 1)
-  bfdc <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+  bf_omega <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
                        x = 1, y = 1, null = null, priorsd = priorsd, w_null = 0, w_alt = 1)
-  bfdcRandom <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+  bf_random_omega_1 <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
                              x = 1, y = 2, null = null, priorsd = priorsd, w_null = NA, w_alt = NA)
-  out <- data.frame(number = rnumber[i], tr = tr[i], sr = sr[i], bf = bf01,
-                    bfr = bfr, bfdc = bfdc, bfdcRandom = bfdcRandom)
+  bf_random_omega_2 <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+                               x = 2, y = 1, null = null, priorsd = priorsd, w_null = NA, w_alt = NA)
+  out <- data.frame(number = rnumber[i], tr = tr[i], sr = sr[i], bf_theta = bf_theta,
+                    bf_theta_random = bf_theta_random, bf_omega = bf_omega, 
+                    bf_random_omega_1 = bf_random_omega_1, bf_random_omega_2 = bf_random_omega_2)
   return(out)
 }))
