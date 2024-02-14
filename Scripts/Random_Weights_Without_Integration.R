@@ -5,7 +5,9 @@ library(ggplot2)
 library(ggthemes)
 library(ggpubr)
 library(colorspace)
-
+library(dplyr)
+library(knitr)
+library(xtable)
 source("Scripts/RepMixFun.R")
 
 #   ____________________________________________________________________________
@@ -27,7 +29,7 @@ priorsd <- 2
 n_weights <- 300
 n_theta <- 300
 wseq <- seq(0, 1, length.out = n_weights)
-thetaseq <- seq(-0.2, 0.6, length.out = n_theta)
+thetaseq <- seq(-6, 6, length.out = 2500)
 par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
 # Uniform Prior 
@@ -184,12 +186,58 @@ HPDI_theta_2$trFormat <- paste0("{hat(theta)[italic('r')*", HPDI_theta_2$rnumber
 #   ____________________________________________________________________________
 #   Bayes Factor                                                            ####
 
+format_bf <- function(BF, digits = "default") {
+  ## check inputs
+  stopifnot(
+    length(BF) == 1,
+    is.numeric(BF),
+    (is.finite(BF) && 0 < BF) || is.na(BF),
+    
+    length(digits) == 1,
+    (is.character(digits) && digits == "default") ||
+      (is.numeric(digits) && 0 <= digits)
+  )
+  ## return NA if input NA/NaN
+  if (is.na(BF) || is.nan(BF))
+    result <- NA
+  else {
+    ## format BF
+    if (digits == "default") {
+      if (BF < 1/1000)
+        result <- "< 1/1000"
+      if ((BF >= 1/1000) & (BF <= 1/10))
+        result <- paste0("1/", as.character(round(1/BF)))
+      if ((BF > 1/10) & (BF < 1))
+        result <- paste0("1/", as.character(round(1/BF, digits = 1)))
+      if ((BF < 10) & (BF >= 1))
+        result <- as.character(round(BF, digits = 1))
+      if ((BF >= 10) & (BF <= 1000))
+        result <- as.character(round(BF))
+      if (BF > 1000)
+        result <- "> 1000"
+    } else {
+      if (BF < 1)
+        result <- paste0("1/", as.character(round(1/BF, digits = digits)))
+      else
+        result <- as.character(round(BF, digits = digits))
+    }
+    ## when 1/1 return 1
+    if (result == "1/1") result <- "1"
+  }
+  return(result)
+}
+format_bf_vec <- Vectorize(FUN = format_bf)
+
+
+
+
+
 rnumber <- c(1, 2, 3)
 
 bf_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  bf_theta <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so,
+  bf_theta_random <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so,
                     x = 1, y = 1, null = null, priorsd = priorsd)
-  bf_theta_random <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = 1, 
+  bf_theta <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = 1, 
                    null = null,priorsd = priorsd, w = 1)
   bf_omega <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
                        x = 1, y = 1, null = null, priorsd = priorsd, w_null = 0, w_alt = 1)
@@ -202,3 +250,64 @@ bf_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
                     bf_random_omega_1 = bf_random_omega_1, bf_random_omega_2 = bf_random_omega_2)
   return(out)
 }))
+
+
+
+## Create LaTeX table for theta
+dfTab_theta <- bf_df[,1:5] %>%
+  mutate(bf_theta = format_bf_vec(bf_theta),
+         bf_theta_random = format_bf_vec(bf_theta_random),
+         tr = round(tr, 2),
+         sr = round(sr, 2),
+         number = as.integer(number)) %>%
+  arrange(tr)
+xtab_theta <- xtable(dfTab_theta)
+colnames(xtab_theta) <- c("",
+                    "$\\hat{\\theta}_r$",
+                    "$\\sigma_r$",
+                    paste0("$\\mathrm{BF}_{01}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_{1} \\: \\omega \\sim \\mathrm{Beta}(",
+                           alpha, ", ", beta, ")\\}$"),
+                    "$\\BF_{01}(\\hat{\\theta}_r \\mid \\mathcal{h}_{1} \\: \\alpha = 1)$"
+                    )
+align(xtab_theta) <- rep("c", length(colnames(xtab_theta)) + 1)
+
+## add multicolumns for effet size test and power parameter test
+addtorow <- list()
+addtorow$pos <- list(-1)
+addtorow$command <- '\\toprule'
+
+print(xtab_theta, floating = FALSE, include.rownames = FALSE, add.to.row = addtorow,
+      sanitize.text.function = function(x){x}, booktabs = TRUE, hline.after = c(0, nrow(xtab_theta)))
+
+
+
+## Create LaTeX table for omega
+dfTab_omega <- bf_df[,c(1:3,6:8)] %>%
+  mutate(bf_omega = format_bf_vec(bf_omega),
+         bf_random_omega_1 = format_bf_vec(bf_random_omega_1),
+         bf_random_omega_2 = format_bf_vec(bf_random_omega_2),
+         tr = round(tr, 2),
+         sr = round(sr, 2),
+         number = as.integer(number)) %>%
+  arrange(tr)
+xtab_omega <- xtable(dfTab_omega)
+colnames(xtab_omega) <- c("",
+                    "$\\hat{\\theta}_r$",
+                    "$\\sigma_r$",
+                    paste0("$\\mathrm{BF}_{\\text{dc}}(\\hat{\\theta}_r \\mid \\mathcal{H}_d \\: \\omega = ",
+                           0, ")$"),
+                    paste0("$\\mathrm{BF}_{\\text{dc}}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_d \\: \\omega \\sim \\mathrm{Beta}(",
+                           1, ", ", 2, ")\\}$"),
+                    paste0("$\\mathrm{BF}_{\\text{dc}}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_d \\: \\omega \\sim \\mathrm{Beta}(",
+                           2, ", ", 1, ")\\}$")
+)
+align(xtab_omega) <- rep("c", length(colnames(xtab_omega)) + 1)
+
+## add multicolumns for effet size test and power parameter test
+addtorow <- list()
+addtorow$pos <- list(-1)
+addtorow$command <- '\\toprule'
+
+print(xtab_omega, floating = FALSE, include.rownames = FALSE, add.to.row = addtorow,
+      sanitize.text.function = function(x){x}, booktabs = TRUE, hline.after = c(0, nrow(xtab_omega)))
+

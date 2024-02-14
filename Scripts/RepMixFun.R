@@ -126,7 +126,6 @@ m_post_theta <- function(theta, tr, sr, to, so, null, priorsd, x, y) {
 #   HPDI Computation                                                        ####
 
 
-
 ##  ............................................................................
 ##  HPDI using Fixed Weights                                                ####
 

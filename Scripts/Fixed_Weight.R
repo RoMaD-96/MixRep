@@ -25,7 +25,7 @@ sr <- c(0.045, 0.06, 0.04)
 null <- 0
 priorsd <- 2
 wseq <- seq(0, 1, 0.1)
-thetaseq <- seq(-0.2, 0.6, length.out = 800)
+thetaseq <- seq(-6, 6, length.out = 2500)
 
 
 
@@ -149,15 +149,60 @@ HPDI_theta_w_median$replication  <-  factor(HPDI_theta_w_median$replication,
 
 
 
-
-
 #   ____________________________________________________________________________
 #   Tipping Point Analysis                                                  ####
+
+
+# Confidence Interval Replication and Original Study
+
+# z-value for 95% CI
+z_value <- qnorm(0.975)
+
+# Calculate 95% CI for each group
+ci_o <- c(to - z_value * so, to + z_value * so)
+ci_r1 <- c(tr[1] - z_value * sr[1], tr[1] + z_value * sr[1])
+ci_r2 <- c(tr[2] - z_value * sr[2], tr[2] + z_value * sr[2])
+ci_r3 <- c(tr[3] - z_value * sr[3], tr[3] + z_value * sr[3])
+
+# Create a data frame for the replication study
+data_ci_rep <- data.frame(
+  median = c(tr[1], tr[2], tr[3]),
+  sr_val = c(sr[1], sr[2], sr[3]),
+  ymin = c(ci_r1[1], ci_r2[1], ci_r3[1]),
+  ymax = c(ci_r1[2], ci_r2[2], ci_r3[2]),
+  weight = c(rep(-0.15,3)),
+  replication = factor(c("Replication 1", "Replication 2", "Replication 3"),
+                       levels = c("Replication 1", "Replication 2", "Replication 3"), 
+                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.045),
+                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.060),
+                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.040)))
+)
+
+# Create a data frame for the original study
+data_ci_orig <- data.frame(
+  median = c(rep(to,3)),
+  sr_val = c(rep(so,3)),
+  ymin = c(rep(ci_o[1], 3)),
+  ymax = c(rep(ci_o[2], 3)),
+  weight = c(rep(1.15,3)),
+  replication = factor(c("Replication 1", "Replication 2", "Replication 3"),
+                       levels = c("Replication 1", "Replication 2", "Replication 3"), 
+                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.045),
+                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.060),
+                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.040)))
+)
+
 
 
 # Plotting the error bars and points
 plot_HPDI_median_rep <- ggplot(HPDI_theta_w_median, aes(x = weight, y = median)) +
   geom_errorbar(aes(ymin = lower, ymax = upper, color = replication), width = 0.05, size = 1.4) +
+  geom_errorbar(data = data_ci_rep, aes(ymin = ymin, ymax = ymax, color = "black"), 
+                width = 0.05, size = 1.4, linetype = 1) +
+  geom_errorbar(data = data_ci_orig, aes(ymin = ymin, ymax = ymax, color = "firebrick4"), 
+                width = 0.05, size = 1.4, linetype = 1) +
+  geom_point(data = data_ci_rep, aes(x = weight, y = median), shape = 16, size = 4, color = "black") +
+  geom_point(data = data_ci_orig, aes(x = weight, y = median), shape = 16, size = 4, color = "firebrick4") +
   geom_point(aes(color = replication), shape = 16, size = 4) +
   labs(x = "Prior Weight", y = "Effect Size Posterior") +
   theme_bw() +
@@ -173,9 +218,9 @@ plot_HPDI_median_rep <- ggplot(HPDI_theta_w_median, aes(x = weight, y = median))
     legend.text = element_text(size = 18)
   ) +
   facet_wrap(~ replication, labeller = label_parsed) +
-  scale_color_manual(values = c("#E69F00", "#009E20", "#0072B2")) +
-  scale_x_continuous(breaks = seq(0, 1, by = 0.1))
-
+  scale_color_manual(values = c("#E69F00", "#009E20", "#0072B2", "black", "firebrick4")) +
+  scale_x_continuous(breaks = c(-0.15, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0 ,1.15), 
+                     labels = c("Rep.", 0.0, 0.2, 0.4, 0.6, 0.8, 1.0, "Orig."))
 # Display the plot
 print(plot_HPDI_median_rep)
 
@@ -195,9 +240,6 @@ for (i in 1:length(tr)) {
                     null = null, priorsd = priorsd, w = w)
   })
 }
-
-
-
 
 
 
