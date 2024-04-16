@@ -73,7 +73,7 @@ print(plot_theta)
 # dev.off() 
 
 ggsave(filename = "plot_theta.pdf",path = "Plots", plot = plot_theta,
-       width = 13, height = 8, device='pdf', dpi=500, useDingbats = FALSE)
+       width = 17, height = 7.5, device='pdf', dpi=500, useDingbats = FALSE)
 
 ##  ............................................................................
 ##  Contour plot of joint posterior                                         ####
@@ -119,7 +119,7 @@ plot_joint <- ggplot(data = postdens_wrapper, aes(x = theta, y = omega, fill = d
 print(plot_joint)
 
 ggsave(filename = "plot_joint.pdf",path = "Plots", plot = plot_joint,
-       width = 14, height = 7, device='pdf', dpi=500, useDingbats = FALSE)
+       width = 17, height = 7.5, device='pdf', dpi=500, useDingbats = FALSE)
 
 
 ##  ............................................................................
@@ -183,6 +183,7 @@ plot_m_theta <- ggplot() +
     x = expression(theta~" Values"),
     y = "Density"
   ) +
+  xlim(-0.2, 0.6) +
   theme_bw() +
   theme(strip.placement = "outside",   # format to look like title
         strip.background = element_blank(),
@@ -246,6 +247,6 @@ plot_marg_post_joint <- ggplot() +
   guides(color=guide_legend(title="Replicated Experiment")) 
 
 ggsave(filename = "plot_marg_post_joint.pdf",path = "Plots", plot = plot_marg_post_joint,
-       width = 14, height = 7, device='pdf', dpi=500, useDingbats = FALSE)
+       width = 17, height = 7.5, device='pdf', dpi=500, useDingbats = FALSE)
 
 

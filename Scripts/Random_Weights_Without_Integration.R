@@ -29,12 +29,12 @@ priorsd <- 2
 n_weights <- 300
 n_theta <- 300
 wseq <- seq(0, 1, length.out = n_weights)
-thetaseq <- seq(-6, 6, length.out = 2500)
+thetaseq <- seq(-0.2, 0.6, length.out = 2500)
 par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
 # Uniform Prior 
-alpha <- 1
-beta <- 1
+alpha <- 4
+beta <- 4
 
 # Replication Number
 rep_number <- c(1,2,3)

@@ -24,7 +24,7 @@ tr <- c(0.09, 0.21, 0.44)
 sr <- c(0.045, 0.06, 0.04)
 null <- 0
 priorsd <- 2
-wseq <- seq(0, 1, 0.1)
+wseq <- seq(0, 1, by = 0.1)
 thetaseq <- seq(-6, 6, length.out = 2500)
 
 
@@ -69,7 +69,7 @@ for (i in 1:length(tr)) {
               dnorm(x = thetaseq, mean = to, sd = so),
               dnorm(x = thetaseq, mean = null, sd = priorsd)),
     replication = paste0( "Replication ", i),
-    linetype = factor(rep(c("Likelihood", "Prior Original", "Prior Robust"), each = length(thetaseq)))
+    linetype = factor(rep(c("Likelihood", "Non-Informative Prior", "Prior Original"), each = length(thetaseq)))
   )
   
 }
@@ -96,7 +96,7 @@ plot_post_fix <- ggplot() +
   geom_line(data = df_additional_lines, aes(x = theta, y = value, linetype = linetype), size = 0.8) +
   scale_color_manual(values = cols) +
   scale_linetype_manual(values = c("dashed", "dotted", "dotdash"),
-                        labels = c("Likelihood (Replication)", "Prior (Original component)", "Prior (Robust component)")) +
+                        labels = c("Likelihood (Replication)", "Prior (Original component)", "Prior (Non-Informative component)")) +
   labs(x = expression("Effect Size" ~ theta), y = "Density") +
   theme_bw() +
   guides(linetype = guide_legend(title = "Density"),
@@ -119,7 +119,7 @@ plot_post_fix <- plot_post_fix + geom_line(aes(linetype = "Likelihood (Replicati
         legend.title = element_text(size = 19))
 
 ggsave(filename = "plot_post_fix.pdf",path = "Plots", plot = plot_post_fix,
-       width = 16.5, height = 8.5, device='pdf', dpi=500, useDingbats = FALSE)
+       width = 17, height = 7.5, device='pdf', dpi=500, useDingbats = FALSE)
 
 
 #   ____________________________________________________________________________
@@ -225,7 +225,7 @@ plot_HPDI_median_rep <- ggplot(HPDI_theta_w_median, aes(x = weight, y = median))
 print(plot_HPDI_median_rep)
 
 ggsave(filename = "plot_HPDI_median_rep.pdf",path = "Plots", plot = plot_HPDI_median_rep,
-       width = 15, height = 8, device='pdf', dpi=500, useDingbats = FALSE)
+       width = 17, height = 7.5, device='pdf', dpi=500, useDingbats = FALSE)
 
 
 
