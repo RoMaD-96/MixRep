@@ -79,7 +79,8 @@ rmapPostFix_alt <- function(theta, w,  tr, sr, to, so, null, priorsd, x, y) {
 
 marginal_lik_fix_w <- function(theta, w,  tr, sr, to, so, null, priorsd, x, y) {
   
-  den_post <- w*dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2)) + (1-w)*dnorm(x = tr, mean = null, sd = sqrt(sr^2 + priorsd^2))
+  den_post <- w*dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2)) + 
+             (1-w)*dnorm(x = tr, mean = null, sd = sqrt(sr^2 + priorsd^2))
 }
 
 ##  ............................................................................

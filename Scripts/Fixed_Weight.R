@@ -23,7 +23,7 @@ so <- 0.05
 tr <- c(0.09, 0.21, 0.44)
 sr <- c(0.045, 0.06, 0.04)
 null <- 0
-priorsd <- 2
+priorsd <- sqrt(2)
 wseq <- seq(0, 1, by = 0.1)
 thetaseq <- seq(-6, 6, length.out = 2500)
 

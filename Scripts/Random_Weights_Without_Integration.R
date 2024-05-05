@@ -23,7 +23,7 @@ so <- 0.05
 tr <- c(0.09, 0.21, 0.44)
 sr <- c(0.05, 0.06, 0.04)
 null <- 0
-priorsd <- 2
+priorsd <- sqrt(2)
 
 # Parameter Grid
 n_weights <- 300
@@ -33,8 +33,8 @@ thetaseq <- seq(-0.2, 0.6, length.out = 2500)
 par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
 # Uniform Prior 
-alpha <- 4
-beta <- 4
+alpha <- 1
+beta <- 1
 
 # Replication Number
 rep_number <- c(1,2,3)
