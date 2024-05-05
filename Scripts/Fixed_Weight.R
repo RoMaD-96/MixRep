@@ -21,7 +21,7 @@ source("Scripts/RepMixFun.R")
 to <- 0.21
 so <- 0.05
 tr <- c(0.09, 0.21, 0.44)
-sr <- c(0.045, 0.06, 0.04)
+sr <- c(0.05, 0.06, 0.04)
 null <- 0
 priorsd <- sqrt(2)
 wseq <- seq(0, 1, by = 0.1)
@@ -81,13 +81,13 @@ df_additional_lines <- do.call(rbind, additional_lines)
 
 df_densities$replication <- factor(df_densities$replication,
                                      levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                                     labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.045),
+                                     labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
                                                 expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
                                                 expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
 
 df_additional_lines$replication <- factor(df_additional_lines$replication,
                                        levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.045),
+                                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
                                                   expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
                                                   expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
 # The ggplot
@@ -143,9 +143,9 @@ HPDI_theta_w_median <- HPDI_theta_w_median[order(HPDI_theta_w_median$replication
 
 HPDI_theta_w_median$replication  <-  factor(HPDI_theta_w_median$replication,
                                             levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                                            labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.045),
-                                                       expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.060),
-                                                       expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.040)))
+                                            labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
+                                                       expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
+                                                       expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
 
 
 
@@ -173,9 +173,9 @@ data_ci_rep <- data.frame(
   weight = c(rep(-0.15,3)),
   replication = factor(c("Replication 1", "Replication 2", "Replication 3"),
                        levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.045),
-                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.060),
-                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.040)))
+                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
+                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
+                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
 )
 
 # Create a data frame for the original study
@@ -187,9 +187,9 @@ data_ci_orig <- data.frame(
   weight = c(rep(1.15,3)),
   replication = factor(c("Replication 1", "Replication 2", "Replication 3"),
                        levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.045),
-                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.060),
-                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.040)))
+                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
+                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
+                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
 )
 
 
