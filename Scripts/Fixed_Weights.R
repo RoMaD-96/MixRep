@@ -4,10 +4,10 @@
 library(ggplot2)
 library(ggpubr)
 library(colorspace)
-library(tipmap)
 library(spatstat)
+library(repmix)
 
-source("Scripts/RepMixFun.R")
+source("Scripts/RepMixFun_BF.R")
 
 
 #   ____________________________________________________________________________
@@ -22,10 +22,17 @@ to <- 0.21
 so <- 0.05
 tr <- c(0.09, 0.21, 0.44)
 sr <- c(0.05, 0.06, 0.04)
-null <- 0
-priorsd <- sqrt(2)
+
+# Mean and Variance Unit Informative Prior
+mu_UIP <- 0
+tau_UIP <- 2
+
+# Parameter Grid
+n_weights <- 300
+n_theta <- 300
 wseq <- seq(0, 1, by = 0.1)
-thetaseq <- seq(-6, 6, length.out = 2500)
+thetaseq <- seq(-0.2, 0.6, length.out = 2500)
+par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
 
 
@@ -41,8 +48,8 @@ cols <- hcl.colors(n = length(wseq), palette = "viridis", alpha = 0.9, rev = TRU
 densities <- list()
 for (i in 1:length(tr)) {
 densities[[i]] <- sapply(X = wseq, FUN = function(w) {
-  rmapPostFix_alt(theta = thetaseq, tr = tr[i], sr = sr[i], to = to, so = so,
-           null = null, priorsd = priorsd, w = w)
+  thetaposteriormix(theta = thetaseq, tr = tr[i], sr = sr[i], to = to, so = so,
+           m = mu_UIP, v = tau_UIP, w = w)
   })
 }
 
@@ -59,7 +66,7 @@ for (i in 1:length(tr)) {
   # Add the additional lines
   df[[i]]$likelihood <- dnorm(x = df[[i]]$theta, mean = tr[i], sd = sr[i])
   df[[i]]$prior_original <- dnorm(x = df[[i]]$theta, mean = to, sd = so)
-  df[[i]]$prior_robust <- dnorm(x = df[[i]]$theta, mean = null, sd = priorsd)
+  df[[i]]$prior_robust <- dnorm(x = df[[i]]$theta, mean = mu_UIP, sd = sqrt(tau_UIP))
   df[[i]]$replication <- paste0( "Replication ", i)
   
   # Create a separate data frame for the additional lines to help in creating the legend
@@ -67,7 +74,7 @@ for (i in 1:length(tr)) {
     theta = rep(thetaseq, 3),
     value = c(dnorm(x = thetaseq, mean = tr[i], sd = sr[i]),
               dnorm(x = thetaseq, mean = to, sd = so),
-              dnorm(x = thetaseq, mean = null, sd = priorsd)),
+              dnorm(x = thetaseq, mean = mu_UIP, sd = sqrt(tau_UIP))),
     replication = paste0( "Replication ", i),
     linetype = factor(rep(c("Likelihood", "Non-Informative Prior", "Prior Original"), each = length(thetaseq)))
   )
@@ -99,24 +106,26 @@ plot_post_fix <- ggplot() +
                         labels = c("Likelihood (Replication)", "Prior (Original component)", "Prior (Non-Informative component)")) +
   labs(x = expression("Effect Size" ~ theta), y = "Density") +
   theme_bw() +
-  guides(linetype = guide_legend(title = "Density"),
-         color = guide_legend(title = "Weight")
+  guides(linetype = guide_legend(title = "Density: ", position = "top"),
+         color = guide_legend(title = "Weight: ", position = "left")
   ) +
-  facet_wrap(~ replication, labeller = label_parsed)
-
-# To make sure that our additional lines are represented in the legend, we need to add them to the plot
-plot_post_fix <- plot_post_fix + geom_line(aes(linetype = "Likelihood (Replication)"), linetype = "dashed", color = "black") +
-  geom_line(aes(linetype = "Prior (Original component)"), linetype = "dotted", color = "black") +
-  geom_line(aes(linetype = "Prior (Robust component)"), linetype = "dotdash", color = "black") +
+  facet_wrap(~ replication, labeller = label_parsed) +
   scale_x_continuous(limits=c(-0.10, 0.6)) +
-  theme(legend.position = "right",
+  theme(
         strip.text.x = element_text(size = 18),
         axis.text.y = element_text(size = 18),
         axis.title.y = element_text(size = 22),
         axis.text.x = element_text(size = 18),
         axis.title.x = element_text(size = 22),
         legend.text = element_text(size = 18),
-        legend.title = element_text(size = 19))
+        legend.title = element_text(size = 19)) 
+
+# To make sure that our additional lines are represented in the legend, we need to add them to the plot
+# plot_post_fix <- plot_post_fix + geom_line(aes(linetype = "Likelihood (Replication)"), linetype = "dashed", color = "black") +
+#   geom_line(aes(linetype = "Prior (Original component)"), linetype = "dotted", color = "black") +
+#   geom_line(aes(linetype = "Prior (Robust component)"), linetype = "dotdash", color = "black")
+
+print(plot_post_fix)
 
 ggsave(filename = "plot_post_fix.pdf",path = "Plots", plot = plot_post_fix,
        width = 17, height = 7.5, device='pdf', dpi=500, useDingbats = FALSE)
@@ -128,13 +137,13 @@ ggsave(filename = "plot_post_fix.pdf",path = "Plots", plot = plot_post_fix,
 HPDI_theta_w_median <- do.call("rbind", lapply(seq(1, length(wseq)), function(i) {
   # Nested lapply for each element of tr and sr
   results <- lapply(seq_along(tr), function(j) {
-    hpd <- HPDI_post_m_theta_fix(level = 0.95, tr = tr[j], sr = sr[j], to = to,
-                                 so = so, w = wseq[i], null = null, priorsd = priorsd)
+    hpd <- thetaHPD(level = 0.95, tr = tr[j], sr = sr[j], to = to,
+                                 so = so, w = wseq[i], m = mu_UIP, v = tau_UIP)
     median_vect <- median_fun(thetaseq, tr = tr[j], sr = sr[j], to = to,
-                              so = so, w = wseq[i], null = null, priorsd = priorsd)
-    out <- data.frame(lower = hpd[1], upper = hpd[2], median = median_vect, weight = wseq[i],
+                              so = so, w = wseq[i], m = mu_UIP, v = tau_UIP)
+    out <- data.frame(lower = hpd[1], upper = hpd[3], median = median_vect, weight = wseq[i],
                       tr_val = tr[j], sr_val = sr[j], # Add tr and sr values to the output
-                      width_int = (hpd[2]-hpd[1]), replication = paste0( "Replication ", j))
+                      width_int = (hpd[3]-hpd[1]), replication = paste0( "Replication ", j))
     return(out)
   })
   do.call("rbind", results) # Combine results for each tr and sr pair
@@ -229,71 +238,3 @@ ggsave(filename = "plot_HPDI_median_rep.pdf",path = "Plots", plot = plot_HPDI_me
 
 
 
-#   ____________________________________________________________________________
-#   Empirical Bayes                                                         ####
-
-
-empirical_bayes <- list()
-for (i in 1:length(tr)) {
-  empirical_bayes[[i]] <- sapply(X = wseq, FUN = function(w) {
-    rmapPostFix_alt(theta = thetaseq, tr = tr[i], sr = sr[i], to = to, so = so,
-                    null = null, priorsd = priorsd, w = w)
-  })
-}
-
-
-
-bfPPtheta <- function(tr, sr, to, so, x = 1, y = 1, alpha = NA, ...) {
-  ## input checks
-  stopifnot(
-    length(tr) == 1,
-    is.numeric(tr),
-    is.finite(tr),
-    
-    length(to) == 1,
-    is.numeric(to),
-    is.finite(to),
-    
-    length(sr) == 1,
-    is.numeric(sr),
-    is.finite(sr),
-    0 < sr,
-    
-    length(so) == 1,
-    is.numeric(so),
-    is.finite(so),
-    0 < so,
-    
-    length(x) == 1,
-    is.numeric(x),
-    is.finite(x),
-    0 <= x,
-    
-    length(y) == 1,
-    is.numeric(y),
-    is.finite(y),
-    0 <= y,
-    
-    length(alpha) == 1,
-    (is.na(alpha) |
-       ((is.numeric(alpha)) &
-          (is.finite(alpha)) &
-          (0 <= alpha) &
-          (alpha <= 1)))
-  )
-  
-  ## marginal density under H0
-  fH0 <- stats::dnorm(x = tr, mean = 0, sd = sr)
-  
-  ## marginal density under H1
-  if (!is.na(alpha)) {
-    fH1 <- stats::dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2/alpha))
-  } else {
-    fH1 <- margLik(tr = tr, to = to, sr = sr, so = so, x = x, y = y,
-                   ... = ...)
-  }
-  
-  ## compute BF
-  bf01 <- fH0/fH1
-  return(bf01)
-}

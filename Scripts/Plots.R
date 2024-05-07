@@ -9,8 +9,7 @@ library(colorspace)
 
 #   ____________________________________________________________________________
 #   Sources                                                                 ####
-
-source("Scripts/Random_Weights_Without_Integration.R")
+source("Scripts/Random_Weights.R")
 
 #   ____________________________________________________________________________
 #   Plots                                                                   ####
@@ -221,8 +220,7 @@ plot_marg_post_joint <- ggplot() +
                      height = height), alpha = 0.8, size = 1.2) +
   geom_line(data=weights_m_post, aes(x=x, y=density, group=rep_number, color=factor(rep_number)),
             lty = 1, alpha = 0.9, size = 1.2) +
-  labs(
-    x = NULL,
+  labs( x = NULL,
     y = "Marginal Posterior Density",
     color = ""
   ) +
@@ -233,18 +231,20 @@ plot_marg_post_joint <- ggplot() +
                expression(" "~hat(theta)[r * 3] == 0.440 ~ ", " ~ sigma[r*3] == 0.04))) +
   facet_wrap(~ parameter, scales = "free", labeller = label_parsed,
              strip.position = "bottom") +
-  theme_light() +
+  theme_bw() +
   theme(strip.placement = "outside",   # format to look like title
         strip.background = element_blank(),
-        strip.text.x = element_text(size = 18),
+        strip.text.x = element_text(size = 22),
         legend.position = "top",
-        axis.text.y = element_text(size = 16),
+        axis.text.y = element_text(size = 18),
         axis.title.y = element_text(size = 22),
-        axis.text.x = element_text(size = 16),
+        axis.text.x = element_text(size = 18),
         axis.title.x = element_text(size = 22),
         legend.title= element_blank(),
-        legend.text = element_text(size = 16)) +
+        legend.text = element_text(size = 18)) +
   guides(color=guide_legend(title="Replicated Experiment")) 
+
+print(plot_marg_post_joint)
 
 ggsave(filename = "plot_marg_post_joint.pdf",path = "Plots", plot = plot_marg_post_joint,
        width = 17, height = 7.5, device='pdf', dpi=500, useDingbats = FALSE)

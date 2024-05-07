@@ -1,14 +1,12 @@
 #   ____________________________________________________________________________
 #   Libraries                                                               ####
 
-library(ggplot2)
-library(ggthemes)
-library(ggpubr)
-library(colorspace)
 library(dplyr)
 library(knitr)
 library(xtable)
-source("Scripts/RepMixFun.R")
+library(repmix)
+
+source("Scripts/RepMixFun_BF.R")
 
 #   ____________________________________________________________________________
 #   Random Weights                                                          ####
@@ -22,8 +20,10 @@ to <- 0.21
 so <- 0.05
 tr <- c(0.09, 0.21, 0.44)
 sr <- c(0.05, 0.06, 0.04)
-null <- 0
-priorsd <- sqrt(2)
+
+# Mean and Variance Unit Informative Prior
+mu_UIP <- 0
+tau_UIP <- 2
 
 # Parameter Grid
 n_weights <- 300
@@ -32,9 +32,9 @@ wseq <- seq(0, 1, length.out = n_weights)
 thetaseq <- seq(-0.2, 0.6, length.out = 2500)
 par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
-# Uniform Prior 
-alpha <- 1
-beta <- 1
+# Uniform Prior for the Weight
+eta <- 1
+nu <- 1
 
 # Replication Number
 rep_number <- c(1,2,3)
@@ -43,21 +43,21 @@ rep_number <- c(1,2,3)
 ##  ............................................................................
 ##  Joint Posterior                                                         ####
 
-postdens <- rmapPost(theta = par_grid$theta, w = par_grid$omega, tr = tr[1], sr = sr[1], to = to, so = so,
-                     null = null, priorsd = priorsd, x = alpha, y = beta)
+postdens <- posteriormix(theta = par_grid$theta, w = par_grid$omega, tr = tr[1], sr = sr[1], 
+                         to = to, so = so, x = eta, y = nu, m = mu_UIP, v = tau_UIP)
 
 postdens_wrapper <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(index) {
-  post_dens <- rmapPost(
+  post_dens <- posteriormix(
     theta = par_grid$theta,
     w = par_grid$omega,
     tr = tr[index],
     sr = sr[index],
     to = to,
     so = so,
-    null = null,
-    priorsd = priorsd,
-    x = alpha,
-    y = beta
+    x = eta,
+    y = nu,
+    m = mu_UIP,
+    v = tau_UIP
   )
   par_grid$tr <- tr[index]
   par_grid$sr <- sr[index]
@@ -72,15 +72,15 @@ postdens_wrapper <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = functio
 ##  Marginal Posterior for w                                                ####
 
 weights_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(index) {
-  marg_p_dens <- m_post_weights(w = wseq,
+  marg_p_dens <- wposteriormix(w = wseq,
                                 tr = tr[index],
                                 sr = sr[index],
                                 to = to,
                                 so = so,
-                                null = null,
-                                priorsd = priorsd,
-                                x = alpha,
-                                y = beta
+                                x = eta,
+                                y = nu,
+                                m = mu_UIP,
+                                v = tau_UIP
   )
   out <- data.frame(x = wseq, density = marg_p_dens, rep_number = rep_number[index],
                     parameter = "'Weight parameter' ~ omega", tr = tr[index], sr = sr[index])
@@ -96,51 +96,33 @@ weights_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(
 ### . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . ..
 ### Credibility Intervals                                                   ####
 
+
 HPDI_weights <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  hpdi <- HPDI_post_m_weights(level = 0.95, tr = tr[i], sr = sr[i], to = to,
-                              so = so, x = alpha, y = beta, null = null, priorsd = priorsd)
+  hpdi <- wHPD(level = 0.95, tr = tr[i], sr = sr[i], to = to,
+                              so = so, m = mu_UIP, v = tau_UIP, x = eta, y = nu)
   out <- data.frame(y = max(weights_m_post$density)*(1 + 0.05*i),
-                    lower = hpdi[1], upper = hpdi[2], rep_number = rep_number[i],
+                    lower = hpdi[1], upper = hpdi[3], rep_number = rep_number[i],
                     parameter = "'Weight parameter' ~ omega", tr = tr[i],
                     sr = sr[i], height = 0.2)
   return(out)
 }))
 
 
-# plot_m_weight <- ggplot(data=weights_m_post, aes(x=x, y=density, group=rep_number, color=factor(rep_number))) +
-#   geom_line(size = 1) +
-#   scale_color_manual(
-#     values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2"),
-#     labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.04),
-#                expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
-#                expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))+
-#   labs(
-#     subtitle = "Marginal Posterior Densities of Weight Parameter",
-#     x = expression(omega~" Values"),
-#     y = "Density"
-#   ) +
-#   theme_minimal() +
-#   guides(color=guide_legend(title="Replicated Experiment")) 
-# 
-# print(plot_m_weight)
-
-
-
-
 
 ##  ............................................................................
 ##  Theta Marginal Posterior                                                ####
 
+
 theta_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(index) {
-  marg_p_dens <- m_post_theta(  theta = thetaseq,
-                                tr = tr[index],
-                                sr = sr[index],
-                                to = to,
-                                so = so,
-                                null = null,
-                                priorsd = priorsd,
-                                x = alpha,
-                                y = beta
+  marg_p_dens <- thetaposteriormix(  theta = thetaseq,
+                                     tr = tr[index],
+                                     sr = sr[index],
+                                     to = to,
+                                     so = so,
+                                     x = eta,
+                                     y = nu,
+                                     m = mu_UIP,
+                                     v = tau_UIP
   )
   out <- data.frame(x = thetaseq, density = marg_p_dens, rep_number = rep_number[index],
                     parameter = "'Effect size' ~ theta", tr = tr[index], sr = sr[index])
@@ -161,10 +143,10 @@ theta_m_post_2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function
 ### Credibility Intervals                                                   ####
 
 HPDI_theta <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  hpd <- HPDI_post_m_theta(level = 0.95, tr = tr[i], sr = sr[i], to = to,
-                        so = so, x = alpha, y = beta, null = null, priorsd = priorsd)
+  hpd <- thetaHPD(level = 0.95, tr = tr[i], sr = sr[i], to = to,
+                        so = so, m = mu_UIP, v = tau_UIP, x = eta, y = nu)
   out <- data.frame(y = max(c(theta_m_post_2$density, theta_m_post$density))*(1 + 0.06*i),
-                    lower = hpd[1], upper = hpd[2], rep_number = rep_number[i],
+                    lower = hpd[1], upper = hpd[3], rep_number = rep_number[i],
                     parameter = "'Effect size' ~ theta", tr = tr[i],
                     sr = sr[i], height = 0.6)
   return(out)
@@ -185,6 +167,8 @@ HPDI_theta_2$trFormat <- paste0("{hat(theta)[italic('r')*", HPDI_theta_2$rnumber
   
 #   ____________________________________________________________________________
 #   Bayes Factor                                                            ####
+
+
 
 format_bf <- function(BF, digits = "default") {
   ## check inputs
@@ -236,15 +220,15 @@ rnumber <- c(1, 2, 3)
 
 bf_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   bf_theta_random <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so,
-                    x = 1, y = 1, null = null, priorsd = priorsd)
+                    x = 1, y = 1, m = mu_UIP, v = tau_UIP)
   bf_theta <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = 1, 
-                   null = null,priorsd = priorsd, w = 1)
+                           m = mu_UIP, v = tau_UIP, w = 1)
   bf_omega <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
-                       x = 1, y = 1, null = null, priorsd = priorsd, w_null = 0, w_alt = 1)
+                       x = 1, y = 1, m = mu_UIP, v = tau_UIP, w_null = 0, w_alt = 1)
   bf_random_omega_1 <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
-                             x = 1, y = 2, null = null, priorsd = priorsd, w_null = NA, w_alt = NA)
+                             x = 1, y = 2, m = mu_UIP, v = tau_UIP, w_null = NA, w_alt = NA)
   bf_random_omega_2 <- bf_omega_mix(tr = tr[i], sr = sr[i], to = to, so = so,
-                               x = 2, y = 1, null = null, priorsd = priorsd, w_null = NA, w_alt = NA)
+                               x = 2, y = 1, m = mu_UIP, v = tau_UIP, w_null = NA, w_alt = NA)
   out <- data.frame(number = rnumber[i], tr = tr[i], sr = sr[i], bf_theta = bf_theta,
                     bf_theta_random = bf_theta_random, bf_omega = bf_omega, 
                     bf_random_omega_1 = bf_random_omega_1, bf_random_omega_2 = bf_random_omega_2)
@@ -266,7 +250,7 @@ colnames(xtab_theta) <- c("",
                     "$\\hat{\\theta}_r$",
                     "$\\sigma_r$",
                     paste0("$\\mathrm{BF}_{01}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_{1} \\: \\omega \\sim \\mathrm{Beta}(",
-                           alpha, ", ", beta, ")\\}$"),
+                           eta, ", ", nu, ")\\}$"),
                     "$\\BF_{01}(\\hat{\\theta}_r \\mid \\mathcal{h}_{1} \\: \\alpha = 1)$"
                     )
 align(xtab_theta) <- rep("c", length(colnames(xtab_theta)) + 1)
