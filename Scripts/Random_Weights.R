@@ -18,8 +18,14 @@ source("Scripts/RepMixFun_BF.R")
 # Original and Replicated Studies
 to <- 0.21
 so <- 0.05
-tr <- c(0.09, 0.21, 0.44)
-sr <- c(0.05, 0.06, 0.04)
+trep <- c(0.09, 0.21, 0.44)
+srep <- c(0.05, 0.06, 0.04)
+
+tp <- round(sum(trep/srep^2)/sum(1/srep^2),2)
+sp <- round(sqrt(1/sum(1/srep^2)),2)
+
+tr <- c(trep,tp)
+sr <- c(srep,sp)
 
 # Mean and Variance Unit Informative Prior
 mu_UIP <- 0
@@ -37,7 +43,7 @@ eta <- 1
 nu <- 1
 
 # Replication Number
-rep_number <- c(1,2,3)
+rep_number <- c(1,2,3,4)
 
 
 ##  ............................................................................
@@ -216,7 +222,7 @@ format_bf_vec <- Vectorize(FUN = format_bf)
 
 
 
-rnumber <- c(1, 2, 3)
+rnumber <- c(1, 2, 3, 4)
 
 bf_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   bf_theta_random <- bf_theta_mix(tr = tr[i], sr = sr[i], to = to, so = so,
@@ -244,7 +250,7 @@ dfTab_theta <- bf_df[,1:5] %>%
          tr = round(tr, 2),
          sr = round(sr, 2),
          number = as.integer(number)) %>%
-  arrange(tr)
+  arrange(number)
 xtab_theta <- xtable(dfTab_theta)
 colnames(xtab_theta) <- c("",
                     "$\\hat{\\theta}_r$",
@@ -273,7 +279,7 @@ dfTab_omega <- bf_df[,c(1:3,6:8)] %>%
          tr = round(tr, 2),
          sr = round(sr, 2),
          number = as.integer(number)) %>%
-  arrange(tr)
+  arrange(number)
 xtab_omega <- xtable(dfTab_omega)
 colnames(xtab_omega) <- c("",
                     "$\\hat{\\theta}_r$",

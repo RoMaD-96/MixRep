@@ -26,14 +26,16 @@ ci_o <- c(to - z_value * so, to + z_value * so)
 ci_r1 <- c(tr[1] - z_value * sr[1], tr[1] + z_value * sr[1])
 ci_r2 <- c(tr[2] - z_value * sr[2], tr[2] + z_value * sr[2])
 ci_r3 <- c(tr[3] - z_value * sr[3], tr[3] + z_value * sr[3])
+ci_r4 <- c(tr[4] - z_value * sr[4], tr[4] + z_value * sr[4])
+
 
 # Create a data frame
 data <- data.frame(
-  group = c("Original", "Replication 1", "Replication 2", "Replication 3"),
-  estimate = c(to, tr[1], tr[2], tr[3]),
-  ymin = c(ci_o[1], ci_r1[1], ci_r2[1], ci_r3[1]),
-  ymax = c(ci_o[2], ci_r1[2], ci_r2[2], ci_r3[2]),
-  color = c("#8A0404", "#E69F00", "#009E20", "#0072B2")
+  group = c("Original", "Replication 1", "Replication 2", "Replication 3", "Replication Pooled"),
+  estimate = c(to, tr[1], tr[2], tr[3], tr[4]),
+  ymin = c(ci_o[1], ci_r1[1], ci_r2[1], ci_r3[1], ci_r4[1]),
+  ymax = c(ci_o[2], ci_r1[2], ci_r2[2], ci_r3[2], ci_r4[2]),
+  color = c("#8A0404", "#E69F00", "#009E20", "#0072B2", "#AA4499")
 )
 
 # Plot
@@ -46,11 +48,13 @@ plot_theta <- ggplot(data) +
     y = "Effect Size Estimate",
     x = "Study") +
   scale_color_manual(
-    values = c("Original" = "#8A0404" ,"Replication 1" = "#E69F00", "Replication 2" = "#009E20", "Replication 3" = "#0072B2"),
+    values = c("Original" = "#8A0404" ,"Replication 1" = "#E69F00", "Replication 2" = "#009E20", "Replication 3" = "#0072B2",
+               "Replication Pooled" = "#AA4499"),
     labels = c(expression(" "~hat(theta)[o] == 0.21 ~ ", " ~ sigma[o] == 0.05),
                expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
                expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
-               expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04))) +
+               expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04),
+               expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03))) +
   theme_bw() +
   theme(
     # axis.title.x = element_blank(),
@@ -77,18 +81,27 @@ ggsave(filename = "plot_theta.pdf",path = "Plots", plot = plot_theta,
 ##  ............................................................................
 ##  Contour plot of joint posterior                                         ####
 
-postdens_wrapper$rep_setting <-paste0( "{hat(theta)[italic('r')*",
-                                       postdens_wrapper$rep_number,
-                                       "] == ",
-                                       round(postdens_wrapper$tr, 2),
-                                       "}*',' ~ sigma[italic('r')*",
-                                       postdens_wrapper$rep_number,
-                                       "] == ",
-                                       round(postdens_wrapper$sr, 2)
+# Create a new column for ordering
+postdens_wrapper$rep_order <- ifelse(postdens_wrapper$rep_number == 4, "p", as.character(postdens_wrapper$rep_number))
+
+# Create the original rep_setting column with proper labels
+postdens_wrapper$rep_setting <- paste0(
+  "{hat(theta)[r*",
+  ifelse(postdens_wrapper$rep_number == 4, "p", postdens_wrapper$rep_number),
+  "] == ",
+  round(postdens_wrapper$tr, 2),
+  "}*',' ~ sigma[r*",
+  ifelse(postdens_wrapper$rep_number == 4, "p", postdens_wrapper$rep_number),
+  "] == ",
+  round(postdens_wrapper$sr, 2)
 )
 
+# Convert the new rep_order column to a factor to specify the order
+postdens_wrapper$rep_order <- factor(postdens_wrapper$rep_order, levels = c("1", "2", "3", "p"))
+
+
 plot_joint <- ggplot(data = postdens_wrapper, aes(x = theta, y = omega, fill = density)) +
-  facet_wrap(~ rep_setting, labeller = label_parsed) +
+  facet_wrap(~ rep_setting, labeller = label_parsed, ncol = 4) +
   geom_raster(interpolate = TRUE) +
   geom_contour(aes(z = density), breaks = seq(0, 24, 3),  alpha = 0.35, size = 0.5) +
   scale_fill_continuous_sequential(palette = "Blues 3", rev = TRUE) +
@@ -131,10 +144,11 @@ plot_weights_m_hpd <- ggplot() +
   geom_line(data=weights_m_post, aes(x=x, y=density, group=rep_number, color=factor(rep_number)),
             lty = 1, alpha = 0.9, size = 1.2) +
   scale_color_manual(
-    values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2"),
-    labels = c(expression(" "~hat(theta)[r*1] == 0.090 ~ ", " ~ sigma[r*1] == 0.05),
-               expression(" "~hat(theta)[r * 2] == 0.210 ~ ", " ~ sigma[r*2] == 0.06),
-               expression(" "~hat(theta)[r * 3] == 0.440 ~ ", " ~ sigma[r*3] == 0.04))) +
+    values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2", "4" = "#AA4499"),
+    labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+               expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+               expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+               expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03))) +
   labs(
     x = expression(omega~" Values"),
     y = "Density"
@@ -174,10 +188,11 @@ plot_m_theta <- ggplot() +
   geom_line(data = theta_m_post, aes(x = x, y = density, color = factor(rep_number)),
             alpha = 0.9, size = 1.0) +
   scale_color_manual(
-    values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2"),
-    labels = c(expression(" "~hat(theta)[r*1] == 0.090 ~ ", " ~ sigma[r*1] == 0.05),
-               expression(" "~hat(theta)[r * 2] == 0.210 ~ ", " ~ sigma[r*2] == 0.06),
-               expression(" "~hat(theta)[r * 3] == 0.440 ~ ", " ~ sigma[r*3] == 0.04))) +
+    values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2", "4" = "#AA4499"),
+    labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+               expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+               expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+               expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03))) +
   labs(
     x = expression(theta~" Values"),
     y = "Density"
@@ -225,10 +240,11 @@ plot_marg_post_joint <- ggplot() +
     color = ""
   ) +
   scale_color_manual(
-    values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2"),
-    labels = c(expression(" "~hat(theta)[r*1] == 0.090 ~ ", " ~ sigma[r*1] == 0.05),
-               expression(" "~hat(theta)[r * 2] == 0.210 ~ ", " ~ sigma[r*2] == 0.06),
-               expression(" "~hat(theta)[r * 3] == 0.440 ~ ", " ~ sigma[r*3] == 0.04))) +
+    values = c("1" = "#E69F00", "2" = "#009E20", "3" = "#0072B2", "4" = "#AA4499"),
+    labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+               expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+               expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+               expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03))) +
   facet_wrap(~ parameter, scales = "free", labeller = label_parsed,
              strip.position = "bottom") +
   theme_bw() +

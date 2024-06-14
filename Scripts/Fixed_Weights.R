@@ -20,8 +20,14 @@ source("Scripts/RepMixFun_BF.R")
 # Original and Replicated Studies
 to <- 0.21
 so <- 0.05
-tr <- c(0.09, 0.21, 0.44)
-sr <- c(0.05, 0.06, 0.04)
+trep <- c(0.09, 0.21, 0.44)
+srep <- c(0.05, 0.06, 0.04)
+
+tp <- round(sum(trep/srep^2)/sum(1/srep^2),2)
+sp <- round(sqrt(1/sum(1/srep^2)),2)
+
+tr <- c(trep,tp)
+sr <- c(srep,sp)
 
 # Mean and Variance Unit Informative Prior
 mu_UIP <- 0
@@ -87,16 +93,18 @@ df_additional_lines <- do.call(rbind, additional_lines)
 
 
 df_densities$replication <- factor(df_densities$replication,
-                                     levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                                     labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
-                                                expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
-                                                expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
+                                     levels = c("Replication 1", "Replication 2", "Replication 3", "Replication 4"), 
+                                     labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+                                                expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+                                                expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+                                                expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03)))
 
 df_additional_lines$replication <- factor(df_additional_lines$replication,
-                                       levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
-                                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
-                                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
+                                       levels = c("Replication 1", "Replication 2", "Replication 3", "Replication 4"), 
+                                       labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+                                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+                                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+                                                  expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03)))
 # The ggplot
 plot_post_fix <- ggplot() + 
   geom_line(data = df_densities, aes(x = theta, y = density, color = w), size = 1) + 
@@ -109,7 +117,7 @@ plot_post_fix <- ggplot() +
   guides(linetype = guide_legend(title = "Density: ", position = "top"),
          color = guide_legend(title = "Weight: ", position = "left")
   ) +
-  facet_wrap(~ replication, labeller = label_parsed) +
+  facet_wrap(~ replication, labeller = label_parsed, ncol = 4) +
   scale_x_continuous(limits=c(-0.10, 0.6)) +
   theme(
         strip.text.x = element_text(size = 18),
@@ -151,11 +159,11 @@ HPDI_theta_w_median <- do.call("rbind", lapply(seq(1, length(wseq)), function(i)
 HPDI_theta_w_median <- HPDI_theta_w_median[order(HPDI_theta_w_median$replication), ]
 
 HPDI_theta_w_median$replication  <-  factor(HPDI_theta_w_median$replication,
-                                            levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                                            labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
-                                                       expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
-                                                       expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
-
+                                            levels = c("Replication 1", "Replication 2", "Replication 3", "Replication 4"), 
+                                            labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+                                                       expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+                                                       expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+                                                       expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03)))
 
 
 #   ____________________________________________________________________________
@@ -172,47 +180,53 @@ ci_o <- c(to - z_value * so, to + z_value * so)
 ci_r1 <- c(tr[1] - z_value * sr[1], tr[1] + z_value * sr[1])
 ci_r2 <- c(tr[2] - z_value * sr[2], tr[2] + z_value * sr[2])
 ci_r3 <- c(tr[3] - z_value * sr[3], tr[3] + z_value * sr[3])
+ci_rp <- c(tr[4] - z_value * sr[4], tr[4] + z_value * sr[4])
 
 # Create a data frame for the replication study
 data_ci_rep <- data.frame(
-  median = c(tr[1], tr[2], tr[3]),
-  sr_val = c(sr[1], sr[2], sr[3]),
-  ymin = c(ci_r1[1], ci_r2[1], ci_r3[1]),
-  ymax = c(ci_r1[2], ci_r2[2], ci_r3[2]),
-  weight = c(rep(-0.15,3)),
-  replication = factor(c("Replication 1", "Replication 2", "Replication 3"),
-                       levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
-                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
-                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
+  median = c(tr[1], tr[2], tr[3], tr[4]),
+  sr_val = c(sr[1], sr[2], sr[3], sr[4]),
+  ymin = c(ci_r1[1], ci_r2[1], ci_r3[1], ci_rp[1]),
+  ymax = c(ci_r1[2], ci_r2[2], ci_r3[2], ci_rp[2]),
+  weight = c(rep(-0.15,4)),
+  replication = factor(c("Replication 1", "Replication 2", "Replication 3", "Replication 4"),
+                       levels = c("Replication 1", "Replication 2", "Replication 3", "Replication 4"), 
+                       labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+                                  expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03)))
+  
 )
 
 # Create a data frame for the original study
 data_ci_orig <- data.frame(
-  median = c(rep(to,3)),
-  sr_val = c(rep(so,3)),
-  ymin = c(rep(ci_o[1], 3)),
-  ymax = c(rep(ci_o[2], 3)),
-  weight = c(rep(1.15,3)),
-  replication = factor(c("Replication 1", "Replication 2", "Replication 3"),
-                       levels = c("Replication 1", "Replication 2", "Replication 3"), 
-                       labels = c(expression(" "~hat(theta)[r*1] == 0.09 ~ ", " ~ sigma[r*1] == 0.05),
-                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r*2] == 0.06),
-                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r*3] == 0.04)))
+  median = c(rep(to,4)),
+  sr_val = c(rep(so,4)),
+  ymin = c(rep(ci_o[1], 4)),
+  ymax = c(rep(ci_o[2], 4)),
+  weight = c(rep(1.15,4)),
+  replication = factor(c("Replication 1", "Replication 2", "Replication 3", "Replication 4"),
+                       levels = c("Replication 1", "Replication 2", "Replication 3", "Replication 4"), 
+                       labels = c(expression(" "~hat(theta)[r * 1] == 0.09 ~ ", " ~ sigma[r * 1] == 0.05),
+                                  expression(" "~hat(theta)[r * 2] == 0.21 ~ ", " ~ sigma[r * 2] == 0.06),
+                                  expression(" "~hat(theta)[r * 3] == 0.44 ~ ", " ~ sigma[r * 3] == 0.04),
+                                  expression(" "~hat(theta)[r * p] == 0.28 ~ ", " ~ sigma[r * p] == 0.03)))
 )
 
+library(RColorBrewer)
+palette_colors <- rep(cols,4)
 
 
 # Plotting the error bars and points
 plot_HPDI_median_rep <- ggplot(HPDI_theta_w_median, aes(x = weight, y = median)) +
-  geom_errorbar(aes(ymin = lower, ymax = upper, color = replication), width = 0.05, size = 1.4) +
-  geom_errorbar(data = data_ci_rep, aes(ymin = ymin, ymax = ymax, color = "black"), 
-                width = 0.05, size = 1.4, linetype = 1) +
-  geom_errorbar(data = data_ci_orig, aes(ymin = ymin, ymax = ymax, color = "firebrick4"), 
-                width = 0.05, size = 1.4, linetype = 1) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.05, size = 1.4, color = palette_colors) +
+  geom_errorbar(data = data_ci_rep, aes(ymin = ymin, ymax = ymax), 
+                width = 0.05, size = 1.4, linetype = 5, color = "black") +
+  geom_errorbar(data = data_ci_orig, aes(ymin = ymin, ymax = ymax), 
+                width = 0.05, size = 1.4, linetype = 5, color = "firebrick4") +
   geom_point(data = data_ci_rep, aes(x = weight, y = median), shape = 16, size = 4, color = "black") +
   geom_point(data = data_ci_orig, aes(x = weight, y = median), shape = 16, size = 4, color = "firebrick4") +
-  geom_point(aes(color = replication), shape = 16, size = 4) +
+  geom_point(shape = 16, size = 4, color = palette_colors) +
   labs(x = "Prior Weight", y = "Effect Size Posterior") +
   theme_bw() +
   theme(
@@ -226,8 +240,7 @@ plot_HPDI_median_rep <- ggplot(HPDI_theta_w_median, aes(x = weight, y = median))
     axis.title.x = element_text(size = 22),
     legend.text = element_text(size = 18)
   ) +
-  facet_wrap(~ replication, labeller = label_parsed) +
-  scale_color_manual(values = c("#E69F00", "#009E20", "#0072B2", "black", "firebrick4")) +
+  facet_wrap(~ replication, labeller = label_parsed, ncol = 4) +
   scale_x_continuous(breaks = c(-0.15, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0 ,1.15), 
                      labels = c("Rep.", 0.0, 0.2, 0.4, 0.6, 0.8, 1.0, "Orig."))
 # Display the plot
