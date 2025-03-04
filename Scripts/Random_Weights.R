@@ -11,15 +11,31 @@ source("Scripts/RepMixFun_BF.R")
 #   ____________________________________________________________________________
 #   Random Weights                                                          ####
 
+load("credentials_data.RData")
+
 
 ##  ............................................................................
 ##  Parameter Setting                                                       ####
 
 # Original and Replicated Studies
-to <- 0.21
-so <- 0.05
-trep <- c(0.09, 0.21, 0.44)
-srep <- c(0.05, 0.06, 0.04)
+to <- data %>%
+  dplyr::filter(type == "original") %>%
+  dplyr::pull(fis) %>%
+  as.numeric()
+so <- data %>%
+  dplyr::filter(site == "original") %>%
+  dplyr::pull(se_fis) %>%
+  as.numeric()
+
+trep <- data %>%
+  dplyr::filter(site %in% c("University of Toronto", "Montana State University", "Ashland University")) %>%
+  dplyr::pull(fis) %>%
+  as.numeric()
+
+srep <- data %>%
+  dplyr::filter(site %in% c("University of Toronto", "Montana State University", "Ashland University")) %>%
+  dplyr::pull(se_fis) %>%
+  as.numeric()
 
 tp <- round(sum(trep/srep^2)/sum(1/srep^2),2)
 sp <- round(sqrt(1/sum(1/srep^2)),2)
@@ -35,7 +51,7 @@ tau_UIP <- 2
 n_weights <- 300
 n_theta <- 300
 wseq <- seq(0, 1, length.out = n_weights)
-thetaseq <- seq(-0.2, 0.6, length.out = 2500)
+thetaseq <- seq(-0.9, 0.9, length.out = 2500)
 par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
 # Uniform Prior for the Weight

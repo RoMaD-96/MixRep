@@ -6,6 +6,7 @@ library(ggpubr)
 library(colorspace)
 library(spatstat)
 library(repmix)
+library(dplyr)
 
 source("Scripts/RepMixFun_BF.R")
 
@@ -17,11 +18,28 @@ source("Scripts/RepMixFun_BF.R")
 ##  ............................................................................
 ##  Parameter Setting                                                       ####
 
+load("credentials_data.RData")
+
+
 # Original and Replicated Studies
-to <- 0.21
-so <- 0.05
-trep <- c(0.09, 0.21, 0.44)
-srep <- c(0.05, 0.06, 0.04)
+to <- data %>%
+  dplyr::filter(type == "original") %>%
+  dplyr::pull(fis) %>%
+  as.numeric()
+so <- data %>%
+  dplyr::filter(site == "original") %>%
+  dplyr::pull(se_fis) %>%
+  as.numeric()
+
+trep <- data %>%
+  dplyr::filter(site %in% c("University of Toronto", "Montana State University", "Ashland University")) %>%
+  dplyr::pull(fis) %>%
+  as.numeric()
+
+srep <- data %>%
+  dplyr::filter(site %in% c("University of Toronto", "Montana State University", "Ashland University")) %>%
+  dplyr::pull(se_fis) %>%
+  as.numeric()
 
 tp <- round(sum(trep/srep^2)/sum(1/srep^2),2)
 sp <- round(sqrt(1/sum(1/srep^2)),2)
@@ -37,7 +55,7 @@ tau_UIP <- 2
 n_weights <- 300
 n_theta <- 300
 wseq <- seq(0, 1, by = 0.1)
-thetaseq <- seq(-0.2, 0.6, length.out = 2500)
+thetaseq <- seq(-0.9, 0.9, length.out = 2500)
 par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
 
@@ -118,7 +136,7 @@ plot_post_fix <- ggplot() +
          color = guide_legend(title = "Weight: ", position = "left")
   ) +
   facet_wrap(~ replication, labeller = label_parsed, ncol = 4) +
-  scale_x_continuous(limits=c(-0.10, 0.6)) +
+  scale_x_continuous(limits=c(-0.7, 0.7)) +
   theme(
         strip.text.x = element_text(size = 18),
         axis.text.y = element_text(size = 18),

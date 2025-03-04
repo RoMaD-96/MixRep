@@ -111,7 +111,7 @@ plot_joint <- ggplot(data = postdens_wrapper, aes(x = theta, y = omega, fill = d
     fill = "Posterior \n Density"
   ) +
   guides(fill = guide_colorbar(barheight = 20, barwidth = 1.3, title.position = "top")) +
-  scale_x_continuous(limits=c(-0.10, 0.6), expand = c(0.04, 0.005)) +
+  scale_x_continuous(limits=c(-0.5, 0.6), expand = c(0.04, 0.005)) +
   scale_y_continuous(limits=c(0, 1), expand = c(0.005, 0.005)) +
   theme_bw() +
   theme(panel.grid.major.y = element_blank(),
@@ -197,7 +197,7 @@ plot_m_theta <- ggplot() +
     x = expression(theta~" Values"),
     y = "Density"
   ) +
-  xlim(-0.2, 0.6) +
+  xlim(-0.6, 0.6) +
   theme_bw() +
   theme(strip.placement = "outside",   # format to look like title
         strip.background = element_blank(),
