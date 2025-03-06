@@ -9,7 +9,7 @@ library(colorspace)
 
 #   ____________________________________________________________________________
 #   Sources                                                                 ####
-source("Scripts/Random_Weights.R")
+source("Scripts/Mixture_Priors/Random_Weights.R")
 
 #   ____________________________________________________________________________
 #   Plots                                                                   ####

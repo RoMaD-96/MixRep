@@ -8,7 +8,7 @@ library(spatstat)
 library(repmix)
 library(dplyr)
 
-source("Scripts/RepMixFun_BF.R")
+source("Scripts/Mixture_Priors/RepMixFun_BF.R")
 
 
 #   ____________________________________________________________________________

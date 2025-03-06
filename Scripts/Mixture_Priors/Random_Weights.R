@@ -6,7 +6,7 @@ library(knitr)
 library(xtable)
 library(repmix)
 
-source("Scripts/RepMixFun_BF.R")
+source("Scripts/Mixture_Priors/RepMixFun_BF.R")
 
 #   ____________________________________________________________________________
 #   Random Weights                                                          ####
