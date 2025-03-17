@@ -241,18 +241,19 @@ alpha_limit_df <- data.frame(
 )
 
 
+#   ____________________________________________________________________________
+#   Bayes Factor                                                            ####
 
-## ----"BF-parameters"----------------------------------------------------------
-## Parameters for Bayes factors
+# Parameters for Bayes factors
 k <- sqrt(2) # unit-information standard deviation
 x <- 1 # uniform prior for effect size BF
 y <- 1 # uniform prior for effect size BF
 yd <- 2 # monotonically decreasing prior for power parameter BF
 
 
-## ----"table-Bayes-factors", results = "asis"----------------------------------
-## Function to nicely format Bayes factors
-.formatBF_ <- function(BF, digits = "default") {
+# Function to format Bayes factors
+
+format_bf <- function(BF, digits = "default") {
   ## check inputs
   stopifnot(
     length(BF) == 1,
@@ -292,51 +293,76 @@ yd <- 2 # monotonically decreasing prior for power parameter BF
   }
   return(result)
 }
-formatBF <- Vectorize(FUN = .formatBF_)
+format_bf_vec <- Vectorize(FUN = format_bf)
 
-## Compute BFs for effect sizes and power parameter
-bfDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  bf01 <- bfPPtheta(tr = tr[i], sr = sr[i], to = to, so = so, x = x, y = y)
-  bfr <- bfPPtheta(tr = tr[i], sr = sr[i], to = to, so = so, alpha = 1)
-  bfdc <- bfPPalpha(tr = tr[i], sr = sr[i], to = to, so = so, uv = k^2)
-  bfdcRandom <- bfPPalpha(tr = tr[i], sr = sr[i], to = to, so = so, y = yd)
-  out <- data.frame(number = rnumber[i], tr = tr[i], sr = sr[i], bf = bf01,
-                    bfr = bfr, bfdc = bfdc, bfdcRandom = bfdcRandom)
+rnumber <- c(1, 2, 3, 4)
+
+# Compute BFs for effect sizes and power parameter
+bf_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  bf_theta_random <- bfPPtheta(tr = tr[i], sr = sr[i], to = to, so = so, x = x, y = y)
+  bf_theta <- bfPPtheta(tr = tr[i], sr = sr[i], to = to, so = so, alpha = 1)
+  bf_alpha <- bfPPalpha(tr = tr[i], sr = sr[i], to = to, so = so, uv = k^2)
+  bf_random_alpha <- bfPPalpha(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = yd)
+  out <- data.frame(number = rnumber[i], tr = tr[i], sr = sr[i], 
+                    bf_theta_random = bf_theta_random,
+                    bf_theta = bf_theta, bf_alpha = bf_alpha, bf_random_alpha = bf_random_alpha)
   return(out)
 }))
 
-## Create LaTeX table
-dfTab <- bfDF %>%
-  mutate(bf = formatBF(bf),
-         bfr = formatBF(bfr),
-         bfdc = formatBF(bfdc),
-         bfdcRandom = formatBF(bfdcRandom),
+## Create LaTeX table for theta
+dfTab_theta <- bf_df[,1:5] %>%
+  mutate(bf_theta = format_bf_vec(bf_theta),
+         bf_theta_random = format_bf_vec(bf_theta_random),
          tr = round(tr, 2),
          sr = round(sr, 2),
          number = as.integer(number)) %>%
-  arrange(tr)
-xtab <- xtable(dfTab)
-colnames(xtab) <- c("",
-                    "$\\hat{\\theta}_r$",
-                    "$\\sigma_r$",
-                    paste0("$\\BF_{01}\\{\\hat{\\theta}_r \\given \\h{1} \\colon \\alpha \\sim \\Be(",
-                           x, ", ", y, ")\\}$"),
-                    "$\\BF_{01}(\\hat{\\theta}_r \\given \\h{1} \\colon \\alpha = 1)$",
-                    ## paste0("$\\BF_{\\text{dc}}(\\hat{\\theta}_r \\given \\kappa^2 =",
-                    ##        k^2, ")$"),
-                    paste0("$\\BF_{\\text{dc}}(\\hat{\\theta}_r \\given \\h{\\text{d}} \\colon \\alpha = 0)$"),
-                    paste0("$\\BF_{\\text{dc}}\\{\\hat{\\theta}_r \\given \\h{\\text{d}} \\colon \\alpha \\sim \\Be(1, ",
-                           yd, ")\\}$"))
-align(xtab) <- rep("c", length(colnames(xtab)) + 1)
-
-## add multicolumns for effet size test and power parameter test
+  arrange(number)
+xtab_theta <- xtable(dfTab_theta)
+colnames(xtab_theta) <- c("",
+                          "$\\hat{\\theta}_r$",
+                          "$\\sigma_r$",
+                          paste0("$\\mathrm{BF}_{01}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_{1} : \\alpha \\sim \\mathrm{Beta}(",
+                                 x, ", ", y, ")\\}$"),
+                          "$\\mathrm{BF}_{01}(\\hat{\\theta}_r \\mid \\mathcal{H}_{1} : \\alpha = 1)$"
+)
+align(xtab_theta) <- rep("c", length(colnames(xtab_theta)) + 1)
+# Add multicolumns for effet size test and power parameter test
 addtorow <- list()
 addtorow$pos <- list(-1)
-addtorow$command <- '\\toprule & & & \\multicolumn{2}{c}{Tests about the effect size $\\theta$} & \\multicolumn{2}{c}{Tests about the power parameter $\\alpha$} \\\\ \\cmidrule(lr){4-5} \\cmidrule(lr){6-7}'
+addtorow$command <- '\\toprule'
+
+print(xtab_theta, floating = FALSE, include.rownames = FALSE, add.to.row = addtorow,
+      sanitize.text.function = function(x){x}, booktabs = TRUE, hline.after = c(0, nrow(xtab_theta)))
 
 
-print(xtab, floating = FALSE, include.rownames = FALSE, add.to.row = addtorow,
-      sanitize.text.function = function(x){x}, booktabs = TRUE, hline.after = c(0, nrow(xtab)))
+
+# Create LaTeX table for alpha
+dfTab_alpha <- bf_df[,c(1:3,6:7)] %>%
+  mutate(bf_alpha = format_bf_vec(bf_alpha),
+         bf_random_alpha = format_bf_vec(bf_random_alpha),
+         tr = round(tr, 2),
+         sr = round(sr, 2),
+         number = as.integer(number)) %>%
+  arrange(number)
+xtab_alpha <- xtable(dfTab_alpha)
+colnames(xtab_alpha) <- c("",
+                          "$\\hat{\\theta}_r$",
+                          "$\\sigma_r$",
+                          paste0("$\\mathrm{BF}_{\\text{dc}}(\\hat{\\theta}_r \\mid \\mathcal{H}_d : \\alpha = ",
+                                 0, ")$"),
+                          paste0("$\\mathrm{BF}_{\\text{dc}}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_d : \\alpha \\sim \\mathrm{Beta}(",
+                                 1, ", ", 2, ")\\}$")
+)
+align(xtab_alpha) <- rep("c", length(colnames(xtab_alpha)) + 1)
+
+# Add multicolumns for effet size test and power parameter test
+addtorow <- list()
+addtorow$pos <- list(-1)
+addtorow$command <- '\\toprule'
+
+print(xtab_alpha, floating = FALSE, include.rownames = FALSE, add.to.row = addtorow,
+      sanitize.text.function = function(x){x}, booktabs = TRUE, hline.after = c(0, nrow(xtab_alpha)))
+
 
 
 ## ----"Fig2-BF-sensitivity", fig.height = 3.25---------------------------------
@@ -344,17 +370,17 @@ print(xtab, floating = FALSE, include.rownames = FALSE, add.to.row = addtorow,
 yseq <- xseq <- exp(seq(log(1.001), log(100), 0.1))
 bfDF2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   ## simple vs. composite BF
-  bfdcRandom <- sapply(X = yseq, FUN = function(y) {
+  bf_random_alpha <- sapply(X = yseq, FUN = function(y) {
     bfPPalpha(tr = tr[i], sr = sr[i], to = to, so = so, y = y)
   })
   ## composite vs. composite BF
-  bfdcRandomFull <- sapply(X = xseq, FUN = function(x) {
+  bf_random_alphaFull <- sapply(X = xseq, FUN = function(x) {
     fd <- margLik(tr = tr[i], sr = sr[i], to = to, so = so, x = 1, y = 2)
     fc <- margLik(tr = tr[i], sr = sr[i], to = to, so = so, x = x, y = 1)
     fd/fc
   })
   out <- data.frame(number = rnumber[i], tr = tr[i], sr = sr[i],
-                    bfdcRandom = bfdcRandom, bfdcRandomFull = bfdcRandomFull,
+                    bf_random_alpha = bf_random_alpha, bf_random_alphaFull = bf_random_alphaFull,
                     y = yseq)
   return(out)
 }))
@@ -364,8 +390,8 @@ bfDF2$rep_setting <- paste0("{hat(theta)[italic('r')*", bfDF2$number, "] == ",
 
 ## plot BFs as a function of prior parameters
 bfbks <- c(1/100, 1/30, 1/10, 1/3, 1, 3, 10, 30, 100)
-bflabs <- formatBF(BF = bfbks)
-ploty <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandom, color = rep_setting)) +
+bflabs <- format_bf_vec(BF = bfbks)
+ploty <- ggplot(data = bfDF2, aes(x = y, y = bf_random_alpha, color = rep_setting)) +
   annotate(geom = "segment", x = 0.95, xend = 0.95, y = 1.1, yend = 11,
            arrow = arrow(type = "closed", length = unit(0.02, "npc")), alpha = 0.95,
            color = "darkgrey") +
@@ -390,7 +416,7 @@ ploty <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandom, color = rep_setting)) +
   theme_bw() +
   theme(panel.grid.minor = element_blank(),
         legend.position = "top")
-plotx <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandomFull, color = rep_setting)) +
+plotx <- ggplot(data = bfDF2, aes(x = y, y = bf_random_alphaFull, color = rep_setting)) +
   annotate(geom = "segment", x = 0.95, xend = 0.95, y = 1.1, yend = 11,
            arrow = arrow(type = "closed", length = unit(0.02, "npc")), alpha = 0.95,
            color = "darkgrey") +
@@ -480,7 +506,7 @@ plotDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
                              direction = ">="))
   outDF <- rbind(outDF1, outDF2)
   outDF$yFacetLab <- paste0("'Pr(BF'['dc']", outDF$direction,
-                            formatBF(outDF$level),
+                            format_bf_vec(outDF$level),
                             "~ '|' ~ italic(H['i']) *", "')'")
   outDF$xFacetLab <- paste0("{hat(theta)[italic(o)] ==",
                             round(outDF$to, 2),
@@ -529,7 +555,7 @@ ssDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
                             sr = srHc, c = so^2/srHc^2, to = to, so = so,
                             direction = "<=", power = pow))
   outDF$yFacetLab <- paste0("'Pr(BF'['dc']", outDF$direction,
-                            formatBF(outDF$level),
+                            format_bf_vec(outDF$level),
                             "~ '|' ~ italic(H['i']) *", "')'")
   outDF$xFacetLab <- paste0("{hat(theta)[italic(o)] ==",
                             round(outDF$to, 2),
@@ -562,7 +588,7 @@ ggplot(data = plotDF, aes(x = c, y = p, color = type)) +
                      limits = c(0, 1)) +
   ## scale_color_brewer(palette = "Dark2", labels = scales::parse_format()) +
   scale_color_manual(values = colblind, labels = scales::parse_format()) +
-  scale_x_log10(breaks = cbks, labels = formatBF(cbks)) +
+  scale_x_log10(breaks = cbks, labels = format_bf_vec(cbks)) +
   theme_bw() +
   theme(panel.grid.minor = element_blank(),
         strip.background.y = element_blank(), strip.placement = "outside")
@@ -728,3 +754,4 @@ ggplot(data = plotDF, aes(x = alpha, y = density, color = factor(so))) +
        color = bquote("Original standard error" ~ sigma[o])) +
   theme(panel.grid.minor = element_blank(),
         legend.position = "top")
+

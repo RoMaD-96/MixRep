@@ -255,7 +255,7 @@ bf_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
 
 
 
-## Create LaTeX table for theta
+# Create LaTeX table for theta
 dfTab_theta <- bf_df[,1:5] %>%
   mutate(bf_theta = format_bf_vec(bf_theta),
          bf_theta_random = format_bf_vec(bf_theta_random),
@@ -267,13 +267,13 @@ xtab_theta <- xtable(dfTab_theta)
 colnames(xtab_theta) <- c("",
                     "$\\hat{\\theta}_r$",
                     "$\\sigma_r$",
-                    paste0("$\\mathrm{BF}_{01}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_{1} \\: \\omega \\sim \\mathrm{Beta}(",
+                    paste0("$\\mathrm{BF}_{01}\\{\\hat{\\theta}_r \\mid \\mathcal{H}_{1} : \\omega \\sim \\mathrm{Beta}(",
                            eta, ", ", nu, ")\\}$"),
-                    "$\\BF_{01}(\\hat{\\theta}_r \\mid \\mathcal{h}_{1} \\: \\alpha = 1)$"
+                    "$\\mathrm{BF}_{01}(\\hat{\\theta}_r \\mid \\mathcal{H}_{1} : \\omega = 1)$"
                     )
 align(xtab_theta) <- rep("c", length(colnames(xtab_theta)) + 1)
 
-## add multicolumns for effet size test and power parameter test
+# Add multicolumns for effet size test and power parameter test
 addtorow <- list()
 addtorow$pos <- list(-1)
 addtorow$command <- '\\toprule'
@@ -283,7 +283,7 @@ print(xtab_theta, floating = FALSE, include.rownames = FALSE, add.to.row = addto
 
 
 
-## Create LaTeX table for omega
+# Create LaTeX table for omega
 dfTab_omega <- bf_df[,c(1:3,6:8)] %>%
   mutate(bf_omega = format_bf_vec(bf_omega),
          bf_random_omega_1 = format_bf_vec(bf_random_omega_1),
@@ -305,7 +305,7 @@ colnames(xtab_omega) <- c("",
 )
 align(xtab_omega) <- rep("c", length(colnames(xtab_omega)) + 1)
 
-## add multicolumns for effet size test and power parameter test
+# Add multicolumns for effet size test and power parameter test
 addtorow <- list()
 addtorow$pos <- list(-1)
 addtorow$command <- '\\toprule'
