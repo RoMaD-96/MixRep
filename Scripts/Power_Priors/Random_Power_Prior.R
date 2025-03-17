@@ -1,14 +1,17 @@
-## Packages
-library(ppRep) # package containing power prior routines
-library(ggplot2) # plotting
-library(colorspace) # colors
-library(xtable) # LaTeX tables
-library(dplyr) # easier data manipulation
-library(hypergeo) # confluent hypergeometric function
-library(ggpubr) # combining plots
+#   ____________________________________________________________________________
+#   Libraries                                                               ####
 
+library(ppRep)
+library(ggplot2)
+library(colorspace)
+library(xtable)
+library(dplyr)
+library(hypergeo)
+library(ggpubr)
 
-## ----"data"-------------------------------------------------------------------
+#   ____________________________________________________________________________
+#   Parameter Setting                                                       ####
+
 # Original and Replicated Studies
 
 load("credentials_data.RData")
@@ -32,185 +35,211 @@ srep <- data %>%
   dplyr::pull(se_fis) %>%
   as.numeric()
 
-tp <- round(sum(trep/srep^2)/sum(1/srep^2),2)
-sp <- round(sqrt(1/sum(1/srep^2)),2)
+tp <- round(sum(trep / srep^2) / sum(1 / srep^2), 2)
+sp <- round(sqrt(1 / sum(1 / srep^2)), 2)
 
-tr <- c(trep,tp)
-sr <- c(srep,sp)
+tr <- c(trep, tp)
+sr <- c(srep, sp)
 rnumber <- c(1, 2, 3, 4)
 
-## Uniform prior for alpha
+# Uniform prior for alpha
 x <- 1
 y <- 1
 
 
-## ----"posterior-distribution", fig.height = 6, cache = TRUE-------------------
-## Parameter grid to compute posterior density
-nalpha <- 400
-ntheta <- 400
-alphaseq <- seq(0, 1, length.out = nalpha)
-thetaseq <- seq(-0.9, 0.9, length.out = ntheta)
-parGrid <- expand.grid(alpha = alphaseq, theta = thetaseq)
+# Parameter grid to compute posterior density
+n_alpha <- 400
+n_theta <- 400
+alphaseq <- seq(0, 1, length.out = n_alpha)
+thetaseq <- seq(-0.9, 0.9, length.out = n_theta)
+par_grid <- expand.grid(alpha = alphaseq, theta = thetaseq)
 m <- 0
 v <- Inf
 
-## Joint posterior
-jointplotDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  pDens <- postPP(theta = parGrid$theta, alpha = parGrid$alpha, tr = tr[i],
-                  sr = sr[i], to = to, so = so, x = x, y = y, m = m, v = v)
-  parGrid$density <- pDens
-  parGrid$tr <- tr[i]
-  parGrid$sr <- sr[i]
-  parGrid$rnumber <- rnumber[i]
-  return(parGrid)
-}))
-jointplotDF$trFormat <- paste0("{hat(theta)[italic('r')*", jointplotDF$rnumber,
-                               "] == ", round(jointplotDF$tr, 2),
-                               "}*',' ~ sigma[italic('r')*", jointplotDF$rnumber,
-                               "] == ", round(jointplotDF$sr, 2))
 
-## Plot of joint posterior
-plotTop <- ggplot(data = jointplotDF, aes(x = theta, y = alpha, fill = density)) +
-  facet_wrap(~ trFormat,
-             labeller = label_parsed, ncol = 4) +
-  geom_raster(interpolate = TRUE) +
-  geom_contour(aes(z = density), breaks = seq(0, 30, 5), alpha = 0.25, col = 1,
-               size = 0.3) +
-  scale_fill_continuous_sequential(palette = "Blues 3", rev = TRUE) +
-  labs(x = bquote("Effect size" ~ theta),
-       y = bquote("Power parameter" ~ alpha),
-       fill = "Posterior \ndensity") +
-  guides(fill = guide_colorbar(barheight = 10, barwidth = 0.5)) +
-  theme_bw() +
-  theme(panel.grid.major.y = element_blank(),
-        panel.grid.minor.y = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank(),
-        strip.text.x = element_text(size = 18),
-        legend.position = "right",
-        axis.text.y = element_text(size = 16),
-        axis.title.y = element_text(size = 22),
-        axis.text.x = element_text(size = 16),
-        axis.title.x = element_text(size = 22),
-        legend.title=element_text(size=16),
-        legend.text = element_text(size = 16),
-        legend.key.size = unit(10, 'cm'))
+#   ____________________________________________________________________________
+#   Joint Posterior                                                         ####
 
-## Marginal posteriors
-alphaplotDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  pDens <- postPPalpha(alpha = alphaseq, tr = tr[i], sr = sr[i], to = to,
-                       so = so, x = x, y = y, m = m, v = v)
-  out <- data.frame(x = alphaseq, density = pDens, rnumber = rnumber[i],
-                    parameter = "'Power parameter' ~ alpha", tr = tr[i], sr = sr[i])
-  return(out)
+joint_plot_df <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  pp_joint_post <- postPP(
+    theta = par_grid$theta, alpha = par_grid$alpha, tr = tr[i],
+    sr = sr[i], to = to, so = so, x = x, y = y, m = m, v = v
+  )
+  par_grid$density <- pp_joint_post
+  par_grid$tr <- tr[i]
+  par_grid$sr <- sr[i]
+  par_grid$rnumber <- rnumber[i]
+  return(par_grid)
 }))
-thetaplotDF <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  pDens <- postPPtheta(theta = thetaseq, tr = tr[i], sr = sr[i], to = to,
-                       so = so, x = x, y = y, m = m, v = v)
-  out <- data.frame(x = thetaseq, density = pDens, rnumber = rnumber[i],
-                    parameter = "'Effect size' ~ theta", tr = tr[i], sr = sr[i])
-  return(out)
-}))
-margplotDF <- rbind(alphaplotDF, thetaplotDF)
-margplotDF$trFormat <- paste0("{hat(theta)[italic('r')*", margplotDF$rnumber,
-                              "] == ", round(margplotDF$tr, 2),
-                              "}*',' ~ sigma[italic('r')*", margplotDF$rnumber,
-                              "] == ", round(margplotDF$sr, 2))
 
-## Posterior of effect size without using original data
-thetaplotDF2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  pDens <- dnorm(x = thetaseq, mean = tr[i], sd = sr[i])
-  out <- data.frame(x = thetaseq, density = pDens, rnumber = rnumber[i],
-                    parameter = "'Effect size' ~ theta", tr = tr[i], sr = sr[i])
-  return(out)
-}))
-thetaplotDF2$trFormat <- paste0("{hat(theta)[italic('r')*", thetaplotDF2$rnumber,
-                                "] == ", round(thetaplotDF2$tr, 2),
-                                "}*',' ~ sigma[italic('r')*",
-                                thetaplotDF2$rnumber, "] == ",
-                                round(thetaplotDF2$sr, 2))
+# Create a new column for ordering
+joint_plot_df$rep_order <- ifelse(joint_plot_df$rnumber == 4, "p", as.character(joint_plot_df$rnumber))
 
-## 95% HPD intervals
-alphaHPD <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  hpd <- postPPalphaHPD(level = 0.95, tr = tr[i], sr = sr[i], to = to,
-                        so = so, x = x, y = y, m = m, v = v)
-  out <- data.frame(y = max(alphaplotDF$density)*(1 + 0.05*i),
-                    lower = hpd[1], upper = hpd[2], rnumber = rnumber[i],
-                    parameter = "'Power parameter' ~ alpha", tr = tr[i],
-                    sr = sr[i], height = 0.2)
-  return(out)
-}))
-thetaHPD <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  hpd <- postPPthetaHPD(level = 0.95, tr = tr[i], sr = sr[i], to = to,
-                        so = so, x = x, y = y, m = m, v = v)
-  out <- data.frame(y = max(c(thetaplotDF2$density, thetaplotDF$density))*(1 + 0.06*i),
-                    lower = hpd[1], upper = hpd[2], rnumber = rnumber[i],
-                    parameter = "'Effect size' ~ theta", tr = tr[i],
-                    sr = sr[i], height = 0.6)
-  return(out)
-}))
-HPDDF <- rbind(alphaHPD, thetaHPD)
-HPDDF$trFormat <- paste0("{hat(theta)[italic('r')*", HPDDF$rnumber, "] == ",
-                         round(HPDDF$tr, 2), "}*',' ~ sigma[italic('r')*",
-                         HPDDF$rnumber, "] == ", round(HPDDF$sr, 2))
+# Create the original rep_setting column with proper labels
+joint_plot_df$rep_setting <- paste0(
+  "{hat(theta)[r*",
+  ifelse(joint_plot_df$rnumber == 4, "p", joint_plot_df$rnumber),
+  "] == ",
+  round(joint_plot_df$tr, 2),
+  "}*',' ~ sigma[r*",
+  ifelse(joint_plot_df$rnumber == 4, "p", joint_plot_df$rnumber),
+  "] == ",
+  round(joint_plot_df$sr, 2)
+)
 
-theta2HPD <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
-  hpd <- tr[i] + c(-1, 1)*qnorm(p = 0.975)*sr[i]
-  out <- data.frame(y = max(c(thetaplotDF2$density, thetaplotDF$density))*(1 + 0.05*i),
-                    lower = hpd[1], upper = hpd[2], rnumber = rnumber[i],
-                    parameter = "'Effect size' ~ theta", tr = tr[i],
-                    sr = sr[i], height = 0.6)
+# Convert the new rep_order column to a factor to specify the order
+joint_plot_df$rep_order <- factor(joint_plot_df$rep_order, levels = c("1", "2", "3", "p"))
+
+
+#   ____________________________________________________________________________
+#   Marginal Posteriors                                                     ####
+
+# Marginal posterior of alpha
+marg_alpha_dens <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  pp_joint_post <- postPPalpha(
+    alpha = alphaseq, tr = tr[i], sr = sr[i], to = to,
+    so = so, x = x, y = y, m = m, v = v
+  )
+  out <- data.frame(
+    x = alphaseq, density = pp_joint_post, rnumber = rnumber[i],
+    parameter = "'Power parameter' ~ alpha", tr = tr[i], sr = sr[i]
+  )
   return(out)
 }))
-theta2HPD$trFormat <- paste0("{hat(theta)[italic('r')*", theta2HPD$rnumber, "] == ",
-                             round(theta2HPD$tr, 2), "}*',' ~ sigma[italic('r')*",
-                             theta2HPD$rnumber, "] == ", round(theta2HPD$sr, 2))
+
+# Marginal posterior of theta
+marg_theta_dens <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  pp_joint_post <- postPPtheta(
+    theta = thetaseq, tr = tr[i], sr = sr[i], to = to,
+    so = so, x = x, y = y, m = m, v = v
+  )
+  out <- data.frame(
+    x = thetaseq, density = pp_joint_post, rnumber = rnumber[i],
+    parameter = "'Effect size' ~ theta", tr = tr[i], sr = sr[i]
+  )
+  return(out)
+}))
+
+# Both marginal distributions
+marg_plot_df <- rbind(marg_alpha_dens, marg_theta_dens)
+
+# Create a new column for ordering
+marg_plot_df$rep_order <- ifelse(marg_plot_df$rnumber == 4, "p", as.character(marg_plot_df$rnumber))
+
+# Create the original rep_setting column with proper labels
+marg_plot_df$rep_setting <- paste0(
+  "{hat(theta)[r*",
+  ifelse(marg_plot_df$rnumber == 4, "p", marg_plot_df$rnumber),
+  "] == ",
+  round(marg_plot_df$tr, 2),
+  "}*',' ~ sigma[r*",
+  ifelse(marg_plot_df$rnumber == 4, "p", marg_plot_df$rnumber),
+  "] == ",
+  round(marg_plot_df$sr, 2)
+)
+
+# Posterior of effect size without using original data
+marg_theta_dens2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  pp_joint_post <- dnorm(x = thetaseq, mean = tr[i], sd = sr[i])
+  out <- data.frame(
+    x = thetaseq, density = pp_joint_post, rnumber = rnumber[i],
+    parameter = "'Effect size' ~ theta", tr = tr[i], sr = sr[i]
+  )
+  return(out)
+}))
+
+# Create a new column for ordering
+marg_theta_dens2$rep_order <- ifelse(marg_theta_dens2$rnumber == 4, "p", as.character(marg_theta_dens2$rnumber))
+
+# Create the original rep_setting column with proper labels
+marg_theta_dens2$rep_setting <- paste0(
+  "{hat(theta)[r*",
+  ifelse(marg_theta_dens2$rnumber == 4, "p", marg_theta_dens2$rnumber),
+  "] == ",
+  round(marg_theta_dens2$tr, 2),
+  "}*',' ~ sigma[r*",
+  ifelse(marg_theta_dens2$rnumber == 4, "p", marg_theta_dens2$rnumber),
+  "] == ",
+  round(marg_theta_dens2$sr, 2)
+)
+
+# 95% HPDI
+HPDI_alpha <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  hpd <- postPPalphaHPD(
+    level = 0.95, tr = tr[i], sr = sr[i], to = to,
+    so = so, x = x, y = y, m = m, v = v
+  )
+  out <- data.frame(
+    y = max(marg_alpha_dens$density) * (1 + 0.05 * i),
+    lower = hpd[1], upper = hpd[2], rnumber = rnumber[i],
+    parameter = "'Power parameter' ~ alpha", tr = tr[i],
+    sr = sr[i], height = 0.2
+  )
+  return(out)
+}))
+HPDI_theta <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  hpd <- postPPthetaHPD(
+    level = 0.95, tr = tr[i], sr = sr[i], to = to,
+    so = so, x = x, y = y, m = m, v = v
+  )
+  out <- data.frame(
+    y = max(c(marg_theta_dens2$density, marg_theta_dens$density)) * (1 + 0.06 * i),
+    lower = hpd[1], upper = hpd[2], rnumber = rnumber[i],
+    parameter = "'Effect size' ~ theta", tr = tr[i],
+    sr = sr[i], height = 0.6
+  )
+  return(out)
+}))
+HPDI_df <- rbind(HPDI_alpha, HPDI_theta)
+
+# Create a new column for ordering
+HPDI_df$rep_order <- ifelse(HPDI_df$rnumber == 4, "p", as.character(HPDI_df$rnumber))
+
+# Create the original rep_setting column with proper labels
+HPDI_df$rep_setting <- paste0(
+  "{hat(theta)[r*",
+  ifelse(HPDI_df$rnumber == 4, "p", HPDI_df$rnumber),
+  "] == ",
+  round(HPDI_df$tr, 2),
+  "}*',' ~ sigma[r*",
+  ifelse(HPDI_df$rnumber == 4, "p", HPDI_df$rnumber),
+  "] == ",
+  round(HPDI_df$sr, 2)
+)
+
+HPDI_theta_2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
+  hpd <- tr[i] + c(-1, 1) * qnorm(p = 0.975) * sr[i]
+  out <- data.frame(
+    y = max(c(marg_theta_dens2$density, marg_theta_dens$density)) * (1 + 0.05 * i),
+    lower = hpd[1], upper = hpd[2], rnumber = rnumber[i],
+    parameter = "'Effect size' ~ theta", tr = tr[i],
+    sr = sr[i], height = 0.6
+  )
+  return(out)
+}))
+
+# Create a new column for ordering
+HPDI_theta_2$rep_order <- ifelse(HPDI_theta_2$rnumber == 4, "p", as.character(HPDI_theta_2$rnumber))
+
+# Create the original rep_setting column with proper labels
+HPDI_theta_2$rep_setting <- paste0(
+  "{hat(theta)[r*",
+  ifelse(HPDI_theta_2$rnumber == 4, "p", HPDI_theta_2$rnumber),
+  "] == ",
+  round(HPDI_theta_2$tr, 2),
+  "}*',' ~ sigma[r*",
+  ifelse(HPDI_theta_2$rnumber == 4, "p", HPDI_theta_2$rnumber),
+  "] == ",
+  round(HPDI_theta_2$sr, 2)
+)
 
 ## Limitting density for perfectly agreeing effect estimates with c = so^2/sr^2 -> infty
-alphaLimitDF <- data.frame(x = alphaseq,
-                           density = dbeta(x = alphaseq, x + 0.5, y),
-                           parameter = "'Power parameter' ~ alpha")
+alpha_limit_df <- data.frame(
+  x = alphaseq,
+  density = dbeta(x = alphaseq, x + 0.5, y),
+  parameter = "'Power parameter' ~ alpha"
+)
 
-## ----"Fig1-posterior-distribution", fig.height = 6----------------------------
-## colorblind friendly scale
-ncat <- length(unique(margplotDF$trFormat))
-colblind <- c("#E69F00", "#009E20", "#0072B2", "#AA4499")
-names(colblind) <- unique(margplotDF$trFormat)
-colblind <- colblind[order(names(colblind))]
-
-## Plot of marginal posteriors
-plotBot <- ggplot() +
-  geom_errorbarh(data = HPDDF,
-                 aes(xmin = lower, xmax = upper, y = y*1.05, color = trFormat,
-                     height = height), alpha = 0.8, size = 1.0) +
-  geom_errorbarh(data = theta2HPD,
-                 aes(xmin = lower, xmax = upper, y = y*1.05, color = trFormat,
-                     height = height), alpha = 0.7, linetype = "22", size = 1.0) +
-  geom_line(data = thetaplotDF2, aes(x = x, y = density, color = trFormat),
-            lty = 2, alpha = 0.5, size = 1.0) +
-  geom_line(data = margplotDF, aes(x = x, y = density, color = trFormat),
-            alpha = 0.9, size = 1.0) +
-  geom_line(data = alphaLimitDF, aes(x = x, y = density), col = 1, lty = 3, alpha = 0.9, size = 1.0) +
-  facet_wrap(~ parameter, scales = "free", labeller = label_parsed,
-             strip.position = "bottom") +
-  
-  theme_bw() +
-  labs(x = NULL, y = "Marginal posterior density", color = "") +
-  scale_color_manual(values = colblind, labels = scales::parse_format()) +
-  theme(strip.placement = "outside",   # format to look like title
-        strip.background = element_blank(),
-        strip.text.x = element_text(size = 18),
-        legend.position = "top",
-        axis.text.y = element_text(size = 16),
-        axis.title.y = element_text(size = 22),
-        axis.text.x = element_text(size = 16),
-        axis.title.x = element_text(size = 22),
-        legend.title= element_blank(),
-        legend.text = element_text(size = 16)) +
-  guides(color=guide_legend(title="Replicated Experiment")) 
-
-## Combine all plots
-ggpubr::ggarrange(plotTop, plotBot, ncol = 1)
 
 
 ## ----"BF-parameters"----------------------------------------------------------
@@ -329,14 +358,14 @@ bfDF2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
                     y = yseq)
   return(out)
 }))
-bfDF2$trFormat <- paste0("{hat(theta)[italic('r')*", bfDF2$number, "] == ",
+bfDF2$rep_setting <- paste0("{hat(theta)[italic('r')*", bfDF2$number, "] == ",
                          round(bfDF2$tr, 2), "}*',' ~ sigma[italic('r')*",
                          bfDF2$number, "] == ", round(bfDF2$sr, 2))
 
 ## plot BFs as a function of prior parameters
 bfbks <- c(1/100, 1/30, 1/10, 1/3, 1, 3, 10, 30, 100)
 bflabs <- formatBF(BF = bfbks)
-ploty <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandom, color = trFormat)) +
+ploty <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandom, color = rep_setting)) +
   annotate(geom = "segment", x = 0.95, xend = 0.95, y = 1.1, yend = 11,
            arrow = arrow(type = "closed", length = unit(0.02, "npc")), alpha = 0.95,
            color = "darkgrey") +
@@ -361,7 +390,7 @@ ploty <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandom, color = trFormat)) +
   theme_bw() +
   theme(panel.grid.minor = element_blank(),
         legend.position = "top")
-plotx <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandomFull, color = trFormat)) +
+plotx <- ggplot(data = bfDF2, aes(x = y, y = bfdcRandomFull, color = rep_setting)) +
   annotate(geom = "segment", x = 0.95, xend = 0.95, y = 1.1, yend = 11,
            arrow = arrow(type = "closed", length = unit(0.02, "npc")), alpha = 0.95,
            color = "darkgrey") +

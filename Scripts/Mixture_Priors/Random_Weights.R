@@ -190,8 +190,6 @@ HPDI_theta_2$trFormat <- paste0("{hat(theta)[italic('r')*", HPDI_theta_2$rnumber
 #   ____________________________________________________________________________
 #   Bayes Factor                                                            ####
 
-
-
 format_bf <- function(BF, digits = "default") {
   ## check inputs
   stopifnot(
@@ -233,8 +231,6 @@ format_bf <- function(BF, digits = "default") {
   return(result)
 }
 format_bf_vec <- Vectorize(FUN = format_bf)
-
-
 
 
 
