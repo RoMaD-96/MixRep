@@ -83,7 +83,7 @@ postdens_wrapper <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = functio
   )
   par_grid$tr <- tr[index]
   par_grid$sr <- sr[index]
-  par_grid$rep_number <- index
+  par_grid$rnumber <- index
   par_grid$density <- post_dens
   return(par_grid)
 }))
@@ -104,7 +104,7 @@ weights_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(
                                 m = mu_UIP,
                                 v = tau_UIP
   )
-  out <- data.frame(x = wseq, density = marg_p_dens, rep_number = rep_number[index],
+  out <- data.frame(x = wseq, density = marg_p_dens, rnumber = rep_number[index],
                     parameter = "'Weight parameter' ~ omega", tr = tr[index], sr = sr[index])
   return(out)
 }))
@@ -123,7 +123,7 @@ HPDI_weights <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i
   hpdi <- wHPD(level = 0.95, tr = tr[i], sr = sr[i], to = to,
                               so = so, m = mu_UIP, v = tau_UIP, x = eta, y = nu)
   out <- data.frame(y = max(weights_m_post$density)*(1 + 0.05*i),
-                    lower = hpdi[1], upper = hpdi[3], rep_number = rep_number[i],
+                    lower = hpdi[1], upper = hpdi[3], rnumber = rep_number[i],
                     parameter = "'Weight parameter' ~ omega", tr = tr[i],
                     sr = sr[i], height = 0.2)
   return(out)
@@ -146,7 +146,7 @@ theta_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(in
                                      m = mu_UIP,
                                      v = tau_UIP
   )
-  out <- data.frame(x = thetaseq, density = marg_p_dens, rep_number = rep_number[index],
+  out <- data.frame(x = thetaseq, density = marg_p_dens, rnumber = rep_number[index],
                     parameter = "'Effect size' ~ theta", tr = tr[index], sr = sr[index])
   return(out)
 }))
@@ -155,7 +155,7 @@ theta_m_post <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function(in
 ## Posterior of effect size without using original data
 theta_m_post_2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   pDens <- dnorm(x = thetaseq, mean = tr[i], sd = sr[i])
-  out <- data.frame(x = thetaseq, density = pDens, rep_number = rep_number[i],
+  out <- data.frame(x = thetaseq, density = pDens, rnumber = rep_number[i],
                     parameter = "'Effect size' ~ theta", tr = tr[i], sr = sr[i])
   return(out)
 }))
@@ -168,7 +168,7 @@ HPDI_theta <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) 
   hpd <- thetaHPD(level = 0.95, tr = tr[i], sr = sr[i], to = to,
                         so = so, m = mu_UIP, v = tau_UIP, x = eta, y = nu)
   out <- data.frame(y = max(c(theta_m_post_2$density, theta_m_post$density))*(1 + 0.06*i),
-                    lower = hpd[1], upper = hpd[3], rep_number = rep_number[i],
+                    lower = hpd[1], upper = hpd[3], rnumber = rep_number[i],
                     parameter = "'Effect size' ~ theta", tr = tr[i],
                     sr = sr[i], height = 0.6)
   return(out)
@@ -177,7 +177,7 @@ HPDI_theta <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) 
 HPDI_theta_2 <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(i) {
   hpd <- tr[i] + c(-1, 1)*qnorm(p = 0.975)*sr[i]
   out <- data.frame(y = max(c(theta_m_post_2$density, theta_m_post$density))*(1 + 0.05*i),
-                    lower = hpd[1], upper = hpd[2], rep_number = rep_number[i],
+                    lower = hpd[1], upper = hpd[2], rnumber = rep_number[i],
                     parameter = "'Effect size' ~ theta", tr = tr[i],
                     sr = sr[i], height = 0.6)
   return(out)
