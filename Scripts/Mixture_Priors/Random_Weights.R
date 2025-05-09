@@ -48,10 +48,10 @@ mu_UIP <- 0
 tau_UIP <- 2
 
 # Parameter Grid
-n_weights <- 300
-n_theta <- 300
+n_weights <- 400
+n_theta <- 400
 wseq <- seq(0, 1, length.out = n_weights)
-thetaseq <- seq(-0.9, 0.9, length.out = 2500)
+thetaseq <- seq(-0.9, 0.9, length.out = n_theta)
 par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 
 # Uniform Prior for the Weight

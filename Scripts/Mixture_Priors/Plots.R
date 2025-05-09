@@ -334,3 +334,4 @@ ggsave(
   plot = plot_marg_post_joint,
   width = 17, height = 7.5, device = "pdf", dpi = 500, useDingbats = FALSE
 )
+
