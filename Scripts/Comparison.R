@@ -343,7 +343,7 @@ comp_plot <- ggplot() +
     aes(
       xmin = lower, xmax = upper, y = y, color = factor(prior),
       height = height
-    ), alpha = 0.7, linewidth = 1.0
+    ), alpha = 0.7, linewidth = 1.0, linetype = "22"
   ) +
   geom_line(
     data = unif_theta, aes(x = x, y = density, color = factor(prior)),
@@ -377,10 +377,16 @@ comp_plot <- ggplot() +
     x = expression("Effect Size" ~ theta),
     y = "Density"
   ) +
-  theme_bw(base_size = 14) +
+  theme_bw() +
   theme(
-    strip.text      = element_text(face = "bold"),
-    legend.position = "top"
+    strip.text.x = element_text(size = 18),
+    legend.position = "top",
+    axis.text.y = element_text(size = 16),
+    axis.title.y = element_text(size = 22),
+    axis.text.x = element_text(size = 16),
+    axis.title.x = element_text(size = 22),
+    legend.title = element_text(size = 16),
+    legend.text = element_text(size = 16)
   )
 
 ggsave(
