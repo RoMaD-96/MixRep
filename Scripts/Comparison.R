@@ -232,7 +232,7 @@ theta_m_post_hm <- do.call("rbind", lapply(X = seq(1:length(tr)), FUN = function
     y = y_pair,
     sigma = sigma_pair,
     labels = c("Original", rep_names[index]),
-    tau.prior = function(t) dhalfnormal(t, scale = 0.2) # Half-normal prior for heterogeneity
+    tau.prior = function(t) dhalfnormal(t, scale = 0.1) # Half-normal prior for heterogeneity
   )
   theta_post <- result_pair$dposterior(mu = thetaseq)
   out <- data.frame(
@@ -254,7 +254,7 @@ HPDI_theta_hm <- do.call("rbind", lapply(X = seq(1, length(tr)), FUN = function(
     y = y_pair,
     sigma = sigma_pair,
     labels = c("Original", rep_names[index]),
-    tau.prior = function(t) dhalfnormal(t, scale = 0.2) # Half-normal prior for heterogeneity
+    tau.prior = function(t) dhalfnormal(t, scale = 0.1) # Half-normal prior for heterogeneity
   )
 
   hpd <- result_pair$post.interval(mu.level = 0.95)
