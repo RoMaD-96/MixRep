@@ -16,7 +16,7 @@ v        <- 2.0
 tr_equal <- to
 tr_diff  <- to + 0.15
 
-sigma_vals <- 10^seq(-1.45, 0, length.out = 200)
+sigma_vals <- 10^seq(-1.6, 0, length.out = 200)
 
 
 #   ____________________________________________________________________________
@@ -56,43 +56,62 @@ df <- tibble(
   )
 
 
-bf_asymp <- ggplot(df, aes(x = sigma, y = BF, 
-               colour = scenario, linetype = scenario)) +
+
+
+bf_asymp <- ggplot(df, aes(x = sigma, y = BF,
+                           colour = scenario, linetype = scenario)) +
   geom_line(size = 1) +
+  geom_line(
+    size        = 1,
+    arrow       = arrow(length = unit(0.35, "cm"),
+                        ends   = "first",
+                        type   = "closed"),
+    show.legend = FALSE
+  ) +
+  scale_x_log10(
+    breaks = scales::trans_breaks("log10", function(x) 10^x),
+    labels = scales::label_number(accuracy = 0.1)  ) +
+  scale_y_log10(
+    labels = scales::label_number(accuracy = 1)  ) +
   scale_colour_manual(
-    values = c("grey40", "orange2"),
+    values = c("grey40","orange2"),
     labels = c(
-      expression(theta[o] != theta[r]),
-      expression(theta[o] == theta[r])
-    )  ) +
+      expression(hat(theta)[o] != hat(theta)[r]),
+      expression(hat(theta)[o] == hat(theta)[r])
+    )
+  ) +
   scale_linetype_manual(
-    values = c("dashed", "solid"),
+    values = c("dashed","solid"),
     labels = c(
-      expression(theta[o] != theta[r]),
-      expression(theta[o] == theta[r])
+      expression(hat(theta)[o] != hat(theta)[r]),
+      expression(hat(theta)[o] == hat(theta)[r])
     )
   ) +
   labs(
-    x = expression(paste(sigma[r], ", ", sigma[o])),
-    y     = expression(BF[dc] ~~ (hat(theta)[r])),
+    x      = expression(paste(sigma[r], ", ", sigma[o])),
+    y      = expression(BF[dc] ~~ (hat(theta)[r])),
     colour = NULL, linetype = NULL
-  ) +
+  )  +
   theme_bw() +
   theme(
-    strip.placement = "outside", # format to look like title
-    strip.background = element_blank(),
-    strip.text.x = element_text(size = 22),
-    legend.position = "top",
-    axis.text.y = element_text(size = 18),
-    axis.title.y = element_text(size = 22),
-    axis.text.x = element_text(size = 18),
-    axis.title.x = element_text(size = 22),
     legend.title = element_blank(),
-    legend.text = element_text(size = 18)
-  ) 
+    legend.position  = "top",
+    strip.placement  = "outside",
+    strip.background = element_blank(),
+    strip.text.x     = element_text(size = 22),
+    axis.text        = element_text(size = 18),
+    axis.title       = element_text(size = 22),
+    legend.text      = element_text(size = 18)
+  )
 
 ggsave(
-  filename = "bf_asymp.pdf", path = "Plots/Mixture_Prior",
-  plot = bf_asymp,
-  width = 17, height = 7.5, device = "pdf", dpi = 500, useDingbats = FALSE
+  filename   = "bf_asymp.pdf",
+  path       = "Plots/Mixture_Prior",
+  plot       = bf_asymp,
+  width      = 17, height = 7.5,
+  device     = "pdf", dpi = 500,
+  useDingbats = FALSE
 )
+
+
+
