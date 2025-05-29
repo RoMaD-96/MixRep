@@ -16,7 +16,7 @@ v        <- 2.0
 tr_equal <- to
 tr_diff  <- to + 0.15
 
-sigma_vals <- 10^seq(-1.6, 0, length.out = 200)
+sigma_vals <- 10^seq(-1.47,0, length.out = 200)
 
 
 #   ____________________________________________________________________________
@@ -71,8 +71,6 @@ bf_asymp <- ggplot(df, aes(x = sigma, y = BF,
   scale_x_log10(
     breaks = scales::trans_breaks("log10", function(x) 10^x),
     labels = scales::label_number(accuracy = 0.1)  ) +
-  scale_y_log10(
-    labels = scales::label_number(accuracy = 1)  ) +
   scale_colour_manual(
     values = c("grey40","orange2"),
     labels = c(
