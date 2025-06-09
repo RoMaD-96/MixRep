@@ -69,7 +69,7 @@ par_grid <- expand.grid(omega = wseq, theta = thetaseq)
 cols <- hcl.colors(n = length(wseq), palette = "viridis", alpha = 0.9, rev = TRUE)
 
 
-# Now let's create a data frame for ggplot
+# Create a data frame for ggplot
 densities <- list()
 for (i in 1:length(tr)) {
   densities[[i]] <- sapply(X = wseq, FUN = function(w) {

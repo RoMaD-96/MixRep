@@ -107,10 +107,12 @@ bf_omega_mix <- function(tr, sr, to, so, x = x, y = y, m = m,
   if (!is.na(w_null) && !is.na(w_alt)) {
     
     ## marginal density under H1: omega = 1
-    alt_H_1 <- dnorm(x = tr, mean = to, sd = sqrt(sr^2 + so^2))
+    alt_H_1 <- marglik(tr = tr, to = to, sr = sr, so = so, m = m,
+                       v = v, w = w_alt)
     
     ## marginal density under H0: omega = 0
-    null_H_0 <- dnorm(x = tr, mean = m, sd = sqrt(sr^2 + v))
+    null_H_0 <- marglik(tr = tr, to = to, sr = sr, so = so, m = m,
+                        v = v, w = w_null)
     
   } else if (x == 1 && y > 1) {
     ## marginal density under H1: omega = 1
