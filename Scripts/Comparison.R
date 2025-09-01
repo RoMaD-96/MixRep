@@ -8,7 +8,7 @@ library(repmix)
 library(hypergeo)
 library(ppRep)
 library(bayesmeta)
-
+library(ggrepel)
 
 source("Scripts/Mixture_Priors/RepMixFun_BF.R")
 
@@ -330,6 +330,32 @@ HPDI_unif$rnumber <- factor(HPDI_unif$rnumber,
   )
 )
 
+
+hpdi_all <- bind_rows(
+  HPDI_unif,
+  hpdi_orig
+)
+
+# Create unif_len dataframe with uniform prior interval lengths
+unif_len <- HPDI_unif %>%
+  mutate(
+    len_unif = upper - lower,
+    rnumber = as.character(rnumber)
+  ) %>%
+  select(rnumber, len_unif)
+
+# Each method's length and percentage reduction
+reduct_df <- hpdi_all %>%
+  filter(prior != "Uniform") %>%
+  mutate(
+    len = upper - lower
+  ) %>%
+  left_join(unif_len, by = "rnumber") %>%
+  mutate(
+    pct_red = (len - len_unif) / len_unif * 100,
+    x_pos   = upper + 0.1
+  )
+
 comp_plot <- ggplot() +
   geom_errorbarh(
     data = hpdi_orig,
@@ -352,6 +378,19 @@ comp_plot <- ggplot() +
   geom_line(
     data = dens_orig, aes(x = x, y = density, color = factor(prior)),
     lty = 1, alpha = 0.9, linewidth = 1.2
+  ) +
+  geom_text(
+    data = reduct_df,
+    aes(
+      x     = x_pos,
+      y     = y,
+      label = paste0(round(pct_red, 1), "%"),
+      color = prior # if you want them colored by method
+    ),
+    hjust = 0, # left-align at x_pos
+    vjust = 0.5, # center-vertically on the y value
+    size = 5,
+    show.legend = FALSE
   ) +
   facet_wrap(~rnumber,
     ncol = 4,
@@ -388,6 +427,8 @@ comp_plot <- ggplot() +
     legend.title = element_text(size = 16),
     legend.text = element_text(size = 16)
   )
+
+print(comp_plot)
 
 ggsave(
   filename = "comp_plot.pdf", path = "Plots",

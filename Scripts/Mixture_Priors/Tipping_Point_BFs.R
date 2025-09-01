@@ -49,7 +49,7 @@ tau_UIP <- 2
 
 
 # Sequence of omega values
-omega_seq <- seq(0, 1, by = 0.1)
+omega_seq <- seq(0, 1, by = 0.01)
 
 #   ____________________________________________________________________________
 #   Tipping Point BF for theta                                              ####
@@ -121,9 +121,21 @@ bf_all$rep_order <- factor(bf_all$rep_order, levels = c("1", "2", "3", "p"))
 
 tipp_BF_theta <- ggplot(bf_all, aes(x = omega, y = BF_theta,  color = factor(rnumber))) +
   geom_line(size = 1) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "gray40") +
-  scale_y_continuous(trans = "log10") +            # log‐scale for wide range
-  scale_x_continuous(
+  geom_hline(yintercept = 1, linetype = "dotdash", color = "gray40") +
+  scale_y_continuous(
+    trans = "log10",
+    breaks = c(0, 1/10, 1/3, 1, 3, 10, 30, 100),
+    labels = c(
+      "0",
+      "1/10",
+      "1/3",
+      "1",
+      "3",
+      "10",
+      "30",
+      "100"
+    )
+  ) + scale_x_continuous(
     breaks = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
     labels = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0) 
   ) +
@@ -177,7 +189,7 @@ ggsave(
 
 tipp_BF_omega <- ggplot(bf_all, aes(x = omega, y = BF_omega,  color = factor(rnumber))) +
   geom_line(size = 1) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "gray40") +
+  geom_hline(yintercept = 1, linetype = "dotdash", color = "gray40") +
   scale_y_continuous(trans = "log10") +  # log‐scale for wide range
   scale_x_continuous(
     breaks = c(0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
