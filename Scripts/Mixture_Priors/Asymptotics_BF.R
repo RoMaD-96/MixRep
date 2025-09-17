@@ -4,6 +4,7 @@
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(repmix)
 
 source("Scripts/Mixture_Priors/RepMixFun_BF.R")
 
@@ -30,7 +31,7 @@ bf_equal_equal  <- sapply(sigma_vals, function(s) {
                so     = s,
                m      = m,
                v      = v,
-               w_null = 0, w_alt = 2)
+               w_null = 0, w_alt = 1)
 })
 bf_equal_diff   <- sapply(sigma_vals, function(s) {
   bf_omega_mix(tr     = tr_diff,
@@ -39,7 +40,7 @@ bf_equal_diff   <- sapply(sigma_vals, function(s) {
                so     = s,
                m      = m,
                v      = v,
-               w_null = 0, w_alt = 2)
+               w_null = 0, w_alt = 1)
 })
 
 

@@ -401,17 +401,17 @@ comp_plot <- ggplot() +
     values = c(
       Hierarchical = "#332288",
       Mixture      = "#44AA99",
-      Power        = "#E69F00",
-      Uniform      = "black"
+      Power        = "#E69F00", 
+      Uniform      = "black"   
     ),
     breaks = c("Hierarchical", "Mixture", "Power", "Uniform"),
     labels = c(
       "Hierarchical Model",
       "Mixture Prior",
-      "Power Prior",
+      "Power Prior", 
       "Uniform Prior"
     )
-  ) +
+  )+
   labs(
     x = expression("Effect Size" ~ theta),
     y = "Density"

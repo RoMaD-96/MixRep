@@ -257,7 +257,7 @@ print(plot_m_theta)
 
 
 #   ____________________________________________________________________________
-#   Arrange of Fig. 6 (Marginal Posterior Densities)                        ####
+#   Arrange of Fig. (Marginal Posterior Densities)                          ####
 
 
 plot_marg_post_joint <- ggplot() +
